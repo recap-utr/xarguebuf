@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "Twitter2Arguebuf"
+version = "0.1.0"
+description = "Microservice for creating argument graphs from Twitter discussions"
+authors = ["Mirko Lenz <info@mirko-lenz.de>"]
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "http://recap.uni-trier.de"
+# repository = "https://github.com/ReCAP-UTR/Argument-Graph-Retrieval-ProCAKE-Client"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.10"
+arguebuf = "^0.2.12"
+typer = "^0.4.0"
+python-dotenv = "^0.19.2"
+python-twitter-v2 = "^0.7.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
