@@ -4,8 +4,6 @@ import typing as t
 from pathlib import Path
 from urllib.parse import urlparse
 
-import typer
-from dataclasses_json import dataclass_json
 from dotenv import load_dotenv
 from pytwitter import Api
 from pytwitter.models.ext import Response
@@ -13,8 +11,6 @@ from pytwitter.models.ext import Response
 from twitter2arguebuf import model
 
 load_dotenv()
-
-app = typer.Typer()
 
 
 def append_response(res: Response, conversation: model.Conversation):
@@ -64,8 +60,7 @@ client = Api(bearer_token=os.getenv("BEARER_TOKEN"))
 error_message = "You have to specify either the ID or the URL of a tweet."
 
 
-@app.command()
-def run(output_folder: Path, ids_urls: t.List[str]):
+def download(output_folder: Path, ids_urls: t.List[str]):
     ids: t.Set[str] = set()
 
     for id_url in ids_urls:
@@ -143,7 +138,3 @@ def run(output_folder: Path, ids_urls: t.List[str]):
 
         with (conversation_path).with_suffix(".json").open("w", encoding="utf-8") as f:
             json.dump(conversation.to_dict(), f)
-
-
-if __name__ == "__main__":
-    app()

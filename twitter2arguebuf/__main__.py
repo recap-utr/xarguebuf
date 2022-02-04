@@ -4,8 +4,8 @@ from . import convert, download, parse_annotations
 
 app = typer.Typer()
 
-app.add_typer(convert.app, name="convert")
-app.add_typer(download.app, name="download")
+app.command()(convert.convert)
+app.command()(download.download)
 app.add_typer(parse_annotations.app, name="parse-annotations")
 
 if __name__ == "__main__":

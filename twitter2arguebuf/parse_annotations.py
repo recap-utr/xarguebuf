@@ -82,7 +82,3 @@ def from_json(
                 print("Scheme not recognized. Skipping.")
 
         graph.to_file(file)
-
-
-if __name__ == "__main__":
-    app()

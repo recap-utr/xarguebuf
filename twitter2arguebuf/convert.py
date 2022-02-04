@@ -6,11 +6,8 @@ from pathlib import Path
 
 import arguebuf
 import pendulum
-import typer
 
 from twitter2arguebuf import model
-
-app = typer.Typer()
 
 handle_pattern = re.compile(r"^@\w+")
 url_pattern = re.compile(r"https?:\/\/t.co\/\w+")
@@ -99,8 +96,7 @@ def build_subtree(
 # 1471031322479140864
 
 
-@app.command()
-def run(
+def convert(
     input_folder: Path,
     input_pattern: str,
     output_folder: Path,
@@ -184,10 +180,10 @@ def run(
 
                     while nodes_to_remove:
                         node_to_remove = nodes_to_remove.pop()
-                        nodes_to_remove.update(
-                            set(g.outgoing_nodes(node_to_remove)).difference([mc])
-                        )
-                        g.remove_node(node_to_remove)
+                        nodes_to_remove.update(g.outgoing_nodes(node_to_remove))
+
+                        if node_to_remove != mc:
+                            g.remove_node(node_to_remove)
 
             conversation_path = output_folder / input_file.relative_to(input_folder)
             conversation_path.parent.mkdir(parents=True, exist_ok=True)
@@ -195,7 +191,3 @@ def run(
 
             if render:
                 arguebuf.render(g.to_gv("svg"), conversation_path.with_suffix(".svg"))
-
-
-if __name__ == "__main__":
-    app()
