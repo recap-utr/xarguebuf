@@ -6,7 +6,7 @@ def prompt() -> str:
     return input("support/attack (s/a): ")
 
 
-file = Path("annotations.json")
+file = Path("dataset.json")
 with file.open("r", encoding="utf-8") as f:
     annotations = json.load(f)
 
