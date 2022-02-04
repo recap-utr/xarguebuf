@@ -1,20 +1,5 @@
-from __future__ import annotations
-
 import json
-import typing as t
-from dataclasses import dataclass
 from pathlib import Path
-
-# @dataclass
-# class Annotation:
-#     scheme_id: str
-#     claim: str
-#     premise: str
-#     label: str
-
-#     @classmethod
-#     def from_dict(cls, d: t.Mapping[str, t.Any]):
-#         return cls(d["scheme_id"], d["claim"], d[""])
 
 
 def prompt() -> str:
