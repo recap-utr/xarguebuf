@@ -23,13 +23,8 @@ def parse_timestamp(value: t.Optional[str]) -> t.Optional[pendulum.DateTime]:
     return None
 
 
-def process_tweet(
-    text: t.Optional[str], clean: bool, min_chars: int
-) -> t.Optional[str]:
-    if not text:
-        return None
-
-    if clean:
+def process_tweet(text: t.Optional[str], clean: bool) -> t.Optional[str]:
+    if clean and text:
         text = url_pattern.sub("", text)
         text = text.strip()
 
@@ -37,9 +32,6 @@ def process_tweet(
             text = handle_pattern.sub("", text).strip()
 
         text = text.replace("  ", " ")
-
-    if len(text) < min_chars:
-        return None
 
     return text
 
@@ -56,7 +48,7 @@ def build_subtree(
 ) -> None:
     for tweet in tweets[parent.id]:
         if tweet.id:
-            if text := process_tweet(tweet.text, clean, min_chars):
+            if (text := process_tweet(tweet.text, clean)) and len(text) > min_chars:
                 atom = arguebuf.AtomNode(
                     id=tweet.id,
                     text=text,
@@ -104,7 +96,7 @@ def convert(
     clean: bool = True,
     min_chars: int = 0,
     min_interactions: int = 0,
-    min_depth: int = 1,
+    min_depth: int = 0,
 ):
     for input_file in input_folder.glob(input_pattern):
         with input_file.open("r", encoding="utf-8") as f:
@@ -153,7 +145,7 @@ def convert(
 
         if mc_tweet.id:
             mc = arguebuf.AtomNode(
-                process_tweet(mc_tweet.text, clean, min_chars),
+                process_tweet(mc_tweet.text, clean),
                 created=parse_timestamp(mc_tweet.created_at),
                 updated=pendulum.now(),
                 participant=participants[mc_tweet.author_id]
@@ -182,7 +174,7 @@ def convert(
                         node_to_remove = nodes_to_remove.pop()
                         nodes_to_remove.update(g.outgoing_nodes(node_to_remove))
 
-                        if node_to_remove != mc:
+                        if node_to_remove.id != mc.id:
                             g.remove_node(node_to_remove)
 
             conversation_path = output_folder / input_file.relative_to(input_folder)
