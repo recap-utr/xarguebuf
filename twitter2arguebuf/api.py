@@ -165,10 +165,12 @@ def count(
         if meta := res.meta:
             if tweet_count := meta.total_tweet_count:
                 total_tweets += tweet_count
+                typer.echo(f"\rCurrently retrieved tweets: {total_tweets}", nl=False)
+
             if token := meta.next_token:
                 pagination_token = token
 
-    typer.echo(total_tweets)
+    typer.echo()
 
 
 @app.command()
