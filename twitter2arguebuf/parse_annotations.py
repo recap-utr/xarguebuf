@@ -36,6 +36,7 @@ def to_json(
     annotations_file: Path = Path("annotations/dataset.json"),
 ):
     casebase = CaseBase()
+    annotations = 0
 
     for file in input_folder.glob(input_pattern):
         graph = arguebuf.Graph.from_file(file)
@@ -54,6 +55,9 @@ def to_json(
                     graph_ann.schemes[scheme_id] = SchemeAnnotation(
                         premise.plain_text, claim.plain_text
                     )
+                    annotations += 1
+
+    typer.echo(f"Total annotations: {annotations}")
 
     with annotations_file.open("w", encoding="utf-8") as f:
         json.dump(casebase.to_dict(), f)

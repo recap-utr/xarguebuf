@@ -185,6 +185,10 @@ def conversations(
     typer.echo(_conversation_ids(ids, urls, query, start_time, end_time, max_results))
 
 
+# (#vote OR #election2020 OR #elections2020) -is:retweet -is:reply -is:quote -is:nullcast lang:en
+# https://twitter.com/JoeBiden/status/1351897267666608129
+
+
 @app.command()
 def download(
     output_folder: Path,
@@ -203,35 +207,17 @@ def download(
         first_pass = True
         pagination_token = None
         conversation = model.Conversation()
+        username = ""
 
         tweet = t.cast(
             Response,
             client.get_tweet(conversation_id, **api_args),
         )
+
         append_response(
             tweet,
             conversation,
         )
-
-        while pagination_token or first_pass:
-            first_pass = False
-
-            res: Response = t.cast(
-                Response,
-                client.search_tweets(
-                    f"conversation_id:{conversation_id}",
-                    since_id=conversation_id,
-                    query_type="all",
-                    **api_args,
-                    max_results=500,
-                    next_token=pagination_token,
-                ),
-            )
-
-            pagination_token = res.meta.next_token if res.meta else None
-            append_response(res, conversation)
-
-        username = ""
 
         if (
             isinstance(tweet.data, model.Tweet)
@@ -252,7 +238,33 @@ def download(
             username = found_name
 
         conversation_path = output_folder / username / conversation_id
-        conversation_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with (conversation_path).with_suffix(".json").open("w", encoding="utf-8") as f:
-            json.dump(conversation.to_dict(), f)
+        while pagination_token or first_pass:
+            first_pass = False
+
+            try:
+                res: Response = t.cast(
+                    Response,
+                    client.search_tweets(
+                        f"conversation_id:{conversation_id}",
+                        since_id=conversation_id,
+                        query_type="all",
+                        **api_args,
+                        max_results=500,
+                        next_token=pagination_token,
+                    ),
+                )
+
+                pagination_token = res.meta.next_token if res.meta else None
+                append_response(res, conversation)
+            except Exception:
+                _save(conversation_path, conversation)
+
+        _save(conversation_path, conversation)
+
+
+def _save(path: Path, conversation: model.Conversation) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with (path).with_suffix(".json").open("w", encoding="utf-8") as f:
+        json.dump(conversation.to_dict(), f)
