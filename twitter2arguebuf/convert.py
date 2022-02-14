@@ -30,7 +30,7 @@ def parse_response(
         if not isinstance(data, list):
             data = [data]
 
-        for tweet in data:
+        for tweet in data + includes.get("tweets", tuple()):
             tweets[tweet["id"]] = model.Tweet.from_dict(tweet)
             conversations.add(tweet["conversation_id"])
 
@@ -204,7 +204,9 @@ def parse_graph(
     return g
 
 
-def conversation_path(folder: Path, mc: arguebuf.AtomNode):
+def conversation_path(folder: Path, mc: t.Optional[arguebuf.AtomNode]):
+    assert mc
+
     return (
         folder
         / (
@@ -214,24 +216,6 @@ def conversation_path(folder: Path, mc: arguebuf.AtomNode):
         )
         / mc.id
     )
-
-
-def save_graph(folder: Path, g: arguebuf.Graph):
-    mc = g.major_claim
-    assert mc
-
-    path = conversation_path(folder, mc).with_suffix(".json")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    g.to_file(path)
-
-
-def render_graph(folder: Path, g: arguebuf.Graph):
-    mc = g.major_claim
-    assert mc
-
-    path = conversation_path(folder, mc).with_suffix(".svg")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    arguebuf.render(g.to_gv("svg"), path)
 
 
 def convert(
@@ -245,11 +229,15 @@ def convert(
     min_depth: int = 0,
 ):
     for input_file in input_folder.glob(input_pattern):
+        typer.echo(f"Loading '{input_file}'...")
+
         with input_file.open("r", encoding="utf-8") as f:
             conversation_ids, tweets, users = parse_response(f)
 
         referenced_tweets = parse_referenced_tweets(tweets)
         participants = parse_participants(users)
+
+        typer.echo("Processing tweets...")
 
         for conversation_id in conversation_ids:
             if mc_tweet := tweets.get(conversation_id):
@@ -263,7 +251,11 @@ def convert(
                     min_depth,
                 )
 
-                save_graph(output_folder, g)
+                if len(g.atom_nodes) > 1:
+                    output_path = conversation_path(output_folder, g.major_claim)
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-                if render:
-                    render_graph(output_folder, g)
+                    g.to_file(output_path.with_suffix(".json"))
+
+                    if render:
+                        arguebuf.render(g.to_gv("svg"), output_path.with_suffix(".svg"))
