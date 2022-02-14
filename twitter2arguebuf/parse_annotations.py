@@ -31,9 +31,9 @@ class CaseBase(DataClassJsonMixin):
 
 @app.command()
 def to_json(
+    annotations_file: Path,
     input_folder: Path,
     input_pattern: str,
-    annotations_file: Path = Path("annotations/dataset.json"),
 ):
     casebase = CaseBase()
     annotations = 0
@@ -65,8 +65,14 @@ def to_json(
 
 @app.command()
 def from_json(
-    input_folder: Path, annotations_file: Path = Path("annotations/dataset.json")
+    annotations_file: Path,
+    input_folder: Path,
+    output_folder: t.Optional[Path] = None,
+    render: bool = False,
 ):
+    if not output_folder:
+        output_folder = input_folder
+
     with annotations_file.open("r", encoding="utf-8") as f:
         casebase = CaseBase.from_dict(json.load(f))
 
@@ -94,4 +100,9 @@ def from_json(
             else:
                 print("Scheme not recognized. Skipping.")
 
-        graph.to_file(file)
+        output_file = output_folder / relative_path
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        graph.to_file(output_file)
+
+        if render:
+            arguebuf.render(graph.to_gv("svg"), output_file.with_suffix(".svg"))
