@@ -74,6 +74,15 @@ def from_json(
         file = input_folder / relative_path
         graph = arguebuf.Graph.from_file(file)
 
+        missing_in_annotation = set(graph.scheme_nodes.keys()).difference(
+            graph_ann.schemes.keys()
+        )
+        missing_in_graph = set(graph_ann.schemes.keys()).difference(
+            graph.scheme_nodes.keys()
+        )
+
+        assert not missing_in_annotation, missing_in_graph
+
         for scheme_id, scheme_ann in graph_ann.schemes.items():
             scheme_node = graph.scheme_nodes[scheme_id]
             label = scheme_ann.label
