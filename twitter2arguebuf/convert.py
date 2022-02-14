@@ -6,7 +6,7 @@ from pathlib import Path
 
 import arguebuf
 import pendulum
-from pytwitter.models.ext import Response
+import typer
 
 from twitter2arguebuf import model
 
@@ -14,25 +14,9 @@ handle_pattern = re.compile(r"^@\w+")
 url_pattern = re.compile(r"https?:\/\/t.co\/\w+")
 
 
-# def append_response(res: t.Mapping[str, t.Any], conv: model.Conversation):
-#     data = res["data"]
-#     includes = res["includes"]
-
-#     if isinstance(data, list):
-#         conv.data.extend(model.Tweet.from_dict(x) for x in data)
-#     else:
-#         conv.data.append(model.Tweet.from_dict(data))
-
-#     conv.includes.media.extend(model.Media.from_dict(x) for x in includes["media"])
-#     conv.includes.polls.extend(model.Poll.from_dict(x) for x in includes["polls"])
-#     conv.includes.places.extend(model.Place.from_dict(x) for x in includes["places"])
-#     conv.includes.tweets.extend(model.Tweet.from_dict(x) for x in includes["tweets"])
-#     conv.includes.users.extend(model.User.from_dict(x) for x in includes["users"])
-
-
 def parse_response(
     f: t.IO[str],
-) -> t.Tuple[t.Set[str], t.Dict[str, model.Tweet], t.Dict[str, model.User]]:
+) -> t.Tuple[t.Set[str], t.Dict[str, model.Tweet], t.Dict[str, model.User],]:
     conversations = set()
     tweets = {}
     users = {}
