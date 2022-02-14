@@ -7,6 +7,7 @@ from pathlib import Path
 import arguebuf
 import typer
 from dataclasses_json import DataClassJsonMixin
+from nltk.metrics.agreement import AnnotationTask
 
 app = typer.Typer()
 
@@ -106,3 +107,35 @@ def from_json(
 
         if render:
             arguebuf.render(graph.to_gv("svg"), output_file.with_suffix(".svg"))
+
+
+@app.command()
+def agreement(template_file: Path, files: t.List[Path]):
+    with template_file.open("r", encoding="utf-8") as f:
+        template = json.load(f)
+
+    annotations = []
+    data = []
+
+    for file in files:
+        with file.open("r", encoding="utf-8") as f:
+            annotations.append(json.load(f))
+
+    for graph_id, graph in template["graphs"].items():
+        for scheme_id in graph["schemes"].keys():
+            for idx, annotation in enumerate(annotations):
+                data.append(
+                    (
+                        idx,
+                        graph_id + scheme_id,
+                        annotation["graphs"][graph_id]["schemes"][scheme_id]["label"],
+                    )
+                )
+    task = AnnotationTask(data)
+
+    typer.echo(f"\tBennett's S: {task.S()}")
+    typer.echo(f"\tScott's Pi: {task.pi()}")
+    typer.echo(f"\tFleiss's Kappa: {task.multi_kappa()}")
+    typer.echo(f"\tCohen's Kappa: {task.kappa()}")
+    typer.echo(f"\tCohen's Weighted Kappa: {task.weighted_kappa()}")
+    typer.echo(f"\tKrippendorff's Alpha: {task.alpha()}")
