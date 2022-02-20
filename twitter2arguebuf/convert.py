@@ -5,8 +5,10 @@ from collections import defaultdict
 from pathlib import Path
 
 import arguebuf
+import grpc
 import pendulum
 import typer
+from arg_services.entailment.v1 import entailment_pb2, entailment_pb2_grpc
 
 from twitter2arguebuf import model
 
@@ -69,6 +71,8 @@ def build_subtree(
     parent: arguebuf.AtomNode,
     tweets: t.Mapping[str, t.Collection[model.Tweet]],
     participants: t.Mapping[str, arguebuf.Participant],
+    client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
+    language: str,
     clean: bool,
     min_chars: int,
     min_interactions: int,
@@ -85,7 +89,26 @@ def build_subtree(
                     if tweet.author_id
                     else None,
                 )
-                scheme = arguebuf.SchemeNode(None, id=f"{atom.id}->{parent.id}")
+                scheme_type = None
+
+                if client:
+                    prediction = client.Entailment(
+                        entailment_pb2.EntailmentRequest(
+                            language=language,
+                            premise=atom.plain_text,
+                            claim=parent.plain_text,
+                        )
+                    )
+
+                    if prediction == entailment_pb2.Prediction.PREDICTION_ENTAILMENT:
+                        scheme_type = arguebuf.SchemeType.SUPPORT
+
+                    elif (
+                        prediction == entailment_pb2.Prediction.PREDICTION_CONTRADICTION
+                    ):
+                        scheme_type = arguebuf.SchemeType.ATTACK
+
+                scheme = arguebuf.SchemeNode(scheme_type, id=f"{atom.id}->{parent.id}")
 
                 if metrics := tweet.public_metrics:
                     likes = metrics.like_count or 0
@@ -105,6 +128,8 @@ def build_subtree(
                             atom,
                             tweets,
                             participants,
+                            client,
+                            language,
                             clean,
                             min_chars,
                             min_interactions,
@@ -160,6 +185,7 @@ def parse_graph(
     mc_tweet: model.Tweet,
     referenced_tweets: t.Mapping[str, t.Collection[model.Tweet]],
     participants: t.Mapping[str, arguebuf.Participant],
+    client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
     clean: bool,
     min_chars: int,
     min_interactions: int,
@@ -181,6 +207,7 @@ def parse_graph(
         1,
         g,
         mc,
+        client,
         referenced_tweets,
         participants,
         clean,
@@ -222,12 +249,21 @@ def convert(
     input_folder: Path,
     input_pattern: str,
     output_folder: Path,
+    entailment_address: t.Optional[str] = None,
     render: bool = False,
     clean: bool = True,
     min_chars: int = 0,
     min_interactions: int = 0,
     min_depth: int = 0,
 ):
+    client = (
+        entailment_pb2_grpc.EntailmentServiceStub(
+            grpc.insecure_channel(entailment_address)
+        )
+        if entailment_address
+        else None
+    )
+
     for input_file in input_folder.glob(input_pattern):
         typer.echo(f"Loading '{input_file}'...")
 
@@ -245,6 +281,7 @@ def convert(
                     mc_tweet,
                     referenced_tweets,
                     participants,
+                    client,
                     clean,
                     min_chars,
                     min_interactions,

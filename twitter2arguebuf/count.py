@@ -1,19 +1,10 @@
-import json
 import os
 import typing as t
 from datetime import datetime
-from pathlib import Path
-from urllib.parse import urlparse
 
-import pendulum
 import typer
-from dateutil import parser as dt_parser
 from dotenv import load_dotenv
-from pytwitter import Api
-from pytwitter.models.ext import Response
 from twarc.client2 import Twarc2
-
-from twitter2arguebuf import model
 
 load_dotenv()
 
@@ -33,5 +24,4 @@ def count(
     )
 
     total_tweets = sum(entry["meta"]["total_tweet_count"] for entry in response)
-
-    typer.echo(f"{total_tweets=}")
+    typer.echo(total_tweets)
