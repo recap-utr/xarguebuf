@@ -123,19 +123,20 @@ def agreement(template_file: Path, files: t.List[Path]):
 
     for graph_id, graph in template["graphs"].items():
         for scheme_id in graph["schemes"].keys():
-            for idx, annotation in enumerate(annotations):
+            for annotator_id, annotation in enumerate(annotations):
                 data.append(
                     (
-                        idx,
+                        annotator_id,
                         graph_id + scheme_id,
                         annotation["graphs"][graph_id]["schemes"][scheme_id]["label"],
                     )
                 )
     task = AnnotationTask(data)
 
-    typer.echo(f"\tBennett's S: {task.S()}")
-    typer.echo(f"\tScott's Pi: {task.pi()}")
-    typer.echo(f"\tFleiss's Kappa: {task.multi_kappa()}")
-    typer.echo(f"\tCohen's Kappa: {task.kappa()}")
-    typer.echo(f"\tCohen's Weighted Kappa: {task.weighted_kappa()}")
-    typer.echo(f"\tKrippendorff's Alpha: {task.alpha()}")
+    typer.echo(f"Annotations: {len(data)}")
+    typer.echo(f"Bennett's S: {task.S()}")
+    typer.echo(f"Scott's Pi: {task.pi()}")
+    typer.echo(f"Fleiss's Kappa: {task.multi_kappa()}")
+    typer.echo(f"Cohen's Kappa: {task.kappa()}")
+    typer.echo(f"Cohen's Weighted Kappa: {task.weighted_kappa()}")
+    typer.echo(f"Krippendorff's Alpha: {task.alpha()}")
