@@ -19,9 +19,9 @@ url_pattern = re.compile(r"https?:\/\/t.co\/\w+")
 def parse_response(
     f: t.IO[str],
 ) -> t.Tuple[t.Set[str], t.Dict[str, model.Tweet], t.Dict[str, model.User],]:
-    conversations = set()
-    tweets = {}
-    users = {}
+    conversations: set[str] = set()
+    tweets: dict[str, model.Tweet] = {}
+    users: dict[str, model.User] = {}
 
     for line in f:
         res = json.loads(line)
@@ -92,7 +92,7 @@ def build_subtree(
                 scheme_type = None
 
                 if client:
-                    prediction = client.Entailment(
+                    prediction: entailment_pb2.EntailmentResponse = client.Entailment(
                         entailment_pb2.EntailmentRequest(
                             language=language,
                             premise=atom.plain_text,
@@ -142,8 +142,8 @@ def build_subtree(
 
 def parse_referenced_tweets(
     tweets: t.Mapping[str, model.Tweet]
-) -> t.Dict[str, t.List[model.Tweet]]:
-    referenced_tweets = defaultdict(list)
+) -> defaultdict[str, list[model.Tweet]]:
+    referenced_tweets: defaultdict[str, list[model.Tweet]] = defaultdict(list)
 
     for tweet_id, tweet in tweets.items():
         if subtweets := tweet.referenced_tweets:
@@ -161,7 +161,7 @@ def parse_referenced_tweets(
 def parse_participants(
     users: t.Mapping[str, model.User]
 ) -> t.Dict[str, arguebuf.Participant]:
-    participants = {}
+    participants: dict[str, arguebuf.Participant] = {}
 
     for user in users.values():
         assert user.id
@@ -204,20 +204,21 @@ def parse_graph(
     g.add_node(mc)
     g.major_claim = mc
     build_subtree(
-        1,
-        g,
-        mc,
-        client,
-        referenced_tweets,
-        participants,
-        clean,
-        min_chars,
-        min_interactions,
+        level=1,
+        g=g,
+        parent=mc,
+        client=client,
+        tweets=referenced_tweets,
+        participants=participants,
+        clean=clean,
+        min_chars=min_chars,
+        min_interactions=min_interactions,
+        language="en",
     )
 
     for leaf in g.leaf_nodes:
         if g.node_distance(leaf, mc, min_depth, ignore_schemes=True):
-            nodes_to_remove = set([leaf])
+            nodes_to_remove = {leaf}
 
             while nodes_to_remove:
                 node_to_remove = nodes_to_remove.pop()

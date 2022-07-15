@@ -114,23 +114,25 @@ def agreement(template_file: Path, files: t.List[Path]):
     with template_file.open("r", encoding="utf-8") as f:
         template = json.load(f)
 
-    annotations = []
-    data = []
+    annotations: list[t.Mapping[str, t.Any]] = []
+    data: list[tuple[int, str, str]] = []
 
     for file in files:
         with file.open("r", encoding="utf-8") as f:
             annotations.append(json.load(f))
 
     for graph_id, graph in template["graphs"].items():
-        for scheme_id in graph["schemes"].keys():
-            for annotator_id, annotation in enumerate(annotations):
-                data.append(
-                    (
-                        annotator_id,
-                        graph_id + scheme_id,
-                        annotation["graphs"][graph_id]["schemes"][scheme_id]["label"],
-                    )
-                )
+        data.extend(
+            (
+                annotator_id,
+                graph_id + scheme_id,
+                annotation["graphs"][graph_id]["schemes"][scheme_id]["label"],
+            )
+            for scheme_id, (annotator_id, annotation) in itertools.product(
+                graph["schemes"].keys(), enumerate(annotations)
+            )
+        )
+
     task = AnnotationTask(data)
 
     typer.echo(f"Annotations: {len(data)}")
