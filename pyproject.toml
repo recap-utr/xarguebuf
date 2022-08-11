@@ -10,16 +10,17 @@ homepage = "http://recap.uni-trier.de"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
-arguebuf = "^0.2.12"
-typer = "^0.4.0"
-python-dotenv = "^0.19.2"
+arguebuf = "^1.0.3"
+typer = "^0.6.1"
+python-dotenv = "^0.20.0"
 pendulum = "^2.1.2"
-twarc = "^2.9.2"
-arg-services = "^0.2.2"
-python-twitter-v2 = "^0.7.4"
+twarc = "^2.11.1"
+arg-services = "^0.3.8"
+python-twitter-v2 = "^0.7.8"
 
 [tool.poetry.dev-dependencies]
 nltk = "^3.7"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

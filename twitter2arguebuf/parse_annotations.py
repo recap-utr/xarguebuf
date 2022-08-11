@@ -95,9 +95,9 @@ def from_json(
             label = scheme_ann.label
 
             if label == "a":
-                scheme_node.type = arguebuf.SchemeType.ATTACK
+                scheme_node.scheme = arguebuf.Attack.DEFAULT
             elif label == "s":
-                scheme_node.type = arguebuf.SchemeType.SUPPORT
+                scheme_node.scheme = arguebuf.Support.DEFAULT
             else:
                 print("Scheme not recognized. Skipping.")
 

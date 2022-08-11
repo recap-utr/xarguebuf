@@ -8,7 +8,7 @@ import arguebuf
 import grpc
 import pendulum
 import typer
-from arg_services.entailment.v1 import entailment_pb2, entailment_pb2_grpc
+from arg_services.mining.v1 import entailment_pb2, entailment_pb2_grpc
 
 from twitter2arguebuf import model
 
@@ -83,8 +83,10 @@ def build_subtree(
                 atom = arguebuf.AtomNode(
                     id=tweet.id,
                     text=text,
-                    created=parse_timestamp(tweet.created_at),
-                    updated=pendulum.now(),
+                    metadata=arguebuf.Metadata(
+                        created=parse_timestamp(tweet.created_at),
+                        updated=pendulum.now(),
+                    ),
                     participant=participants[tweet.author_id]
                     if tweet.author_id
                     else None,
@@ -100,15 +102,13 @@ def build_subtree(
                         )
                     )
 
-                    if prediction == entailment_pb2.Prediction.PREDICTION_ENTAILMENT:
-                        scheme_type = arguebuf.SchemeType.SUPPORT
+                    if prediction == entailment_pb2.ENTAILMENT_TYPE_ENTAILMENT:
+                        scheme_type = arguebuf.Support.DEFAULT
 
-                    elif (
-                        prediction == entailment_pb2.Prediction.PREDICTION_CONTRADICTION
-                    ):
-                        scheme_type = arguebuf.SchemeType.ATTACK
+                    elif prediction == entailment_pb2.ENTAILMENT_TYPE_CONTRADICTION:
+                        scheme_type = arguebuf.Attack.DEFAULT
 
-                scheme = arguebuf.SchemeNode(scheme_type, id=f"{atom.id}->{parent.id}")
+                scheme = arguebuf.SchemeNode(scheme_type, id=f"{atom.id},{parent.id}")
 
                 if metrics := tweet.public_metrics:
                     likes = metrics.like_count or 0
@@ -173,9 +173,11 @@ def parse_participants(
             user.url,
             user.location,
             user.description,
-            created=parse_timestamp(user.created_at) or pendulum.now(),
-            updated=pendulum.now(),
-            _id=user.id,
+            metadata=arguebuf.Metadata(
+                created=parse_timestamp(user.created_at) or pendulum.now(),
+                updated=pendulum.now(),
+            ),
+            id=user.id,
         )
 
     return participants
@@ -196,8 +198,9 @@ def parse_graph(
 
     mc = arguebuf.AtomNode(
         process_tweet(mc_tweet.text, clean),
-        created=parse_timestamp(mc_tweet.created_at),
-        updated=pendulum.now(),
+        metadata=arguebuf.Metadata(
+            created=parse_timestamp(mc_tweet.created_at), updated=pendulum.now()
+        ),
         participant=participants[mc_tweet.author_id] if mc_tweet.author_id else None,
         id=mc_tweet.id,
     )
