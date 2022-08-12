@@ -9,6 +9,8 @@ import grpc
 import pendulum
 import typer
 from arg_services.mining.v1 import entailment_pb2, entailment_pb2_grpc
+from rich import print
+from rich.progress import track
 
 from twitter2arguebuf import model
 
@@ -23,7 +25,10 @@ def parse_response(
     tweets: dict[str, model.Tweet] = {}
     users: dict[str, model.User] = {}
 
-    for line in f:
+    total_iterations = sum(1 for _ in f)
+    f.seek(0)
+
+    for line in track(f, "Reading file...", total=total_iterations):
         res = json.loads(line)
 
         data = res["data"]
@@ -134,10 +139,6 @@ def build_subtree(
                             min_chars,
                             min_interactions,
                         )
-
-
-# 1428023656895057920
-# 1471031322479140864
 
 
 def parse_referenced_tweets(
@@ -252,7 +253,7 @@ def conversation_path(folder: Path, mc: t.Optional[arguebuf.AtomNode]):
 def convert(
     input_folder: Path,
     input_pattern: str,
-    output_folder: Path,
+    output_folder: t.Optional[Path] = None,
     entailment_address: t.Optional[str] = None,
     render: bool = False,
     clean: bool = True,
@@ -269,7 +270,7 @@ def convert(
     )
 
     for input_file in input_folder.glob(input_pattern):
-        typer.echo(f"Loading '{input_file}'...")
+        print(f"Processing '{input_file}'")
 
         with input_file.open("r", encoding="utf-8") as f:
             conversation_ids, tweets, users = parse_response(f)
@@ -277,9 +278,9 @@ def convert(
         referenced_tweets = parse_referenced_tweets(tweets)
         participants = parse_participants(users)
 
-        typer.echo("Processing tweets...")
-
-        for conversation_id in conversation_ids:
+        for conversation_id in track(
+            conversation_ids, description=f"Converting tweets..."
+        ):
             if mc_tweet := tweets.get(conversation_id):
                 g = parse_graph(
                     mc_tweet,
@@ -293,7 +294,9 @@ def convert(
                 )
 
                 if len(g.atom_nodes) > 1:
-                    output_path = conversation_path(output_folder, g.major_claim)
+                    output_path = conversation_path(
+                        output_folder or input_folder, g.major_claim
+                    )
                     output_path.parent.mkdir(parents=True, exist_ok=True)
 
                     g.to_file(output_path.with_suffix(".json"))

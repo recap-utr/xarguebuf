@@ -2,8 +2,8 @@ import os
 import typing as t
 from datetime import datetime
 
-import typer
 from dotenv import load_dotenv
+from rich import print
 from twarc.client2 import Twarc2
 
 load_dotenv()
@@ -24,4 +24,4 @@ def count(
     )
 
     total_tweets = sum(entry["meta"]["total_tweet_count"] for entry in response)
-    typer.echo(total_tweets)
+    print(total_tweets)

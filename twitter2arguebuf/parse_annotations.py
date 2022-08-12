@@ -8,6 +8,7 @@ import arguebuf
 import typer
 from dataclasses_json import DataClassJsonMixin
 from nltk.metrics.agreement import AnnotationTask
+from rich import print
 
 app = typer.Typer()
 
@@ -58,7 +59,7 @@ def to_json(
                     )
                     annotations += 1
 
-    typer.echo(f"Total annotations: {annotations}")
+    print(f"Total annotations: {annotations}")
 
     with annotations_file.open("w", encoding="utf-8") as f:
         json.dump(casebase.to_dict(), f)
@@ -135,10 +136,10 @@ def agreement(template_file: Path, files: t.List[Path]):
 
     task = AnnotationTask(data)
 
-    typer.echo(f"Annotations: {len(data)}")
-    typer.echo(f"Bennett's S: {task.S()}")
-    typer.echo(f"Scott's Pi: {task.pi()}")
-    typer.echo(f"Fleiss's Kappa: {task.multi_kappa()}")
-    typer.echo(f"Cohen's Kappa: {task.kappa()}")
-    typer.echo(f"Cohen's Weighted Kappa: {task.weighted_kappa()}")
-    typer.echo(f"Krippendorff's Alpha: {task.alpha()}")
+    print(f"Annotations: {len(data)}")
+    print(f"Bennett's S: {task.S()}")
+    print(f"Scott's Pi: {task.pi()}")
+    print(f"Fleiss's Kappa: {task.multi_kappa()}")
+    print(f"Cohen's Kappa: {task.kappa()}")
+    print(f"Cohen's Weighted Kappa: {task.weighted_kappa()}")
+    print(f"Krippendorff's Alpha: {task.alpha()}")
