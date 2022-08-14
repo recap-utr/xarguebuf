@@ -88,6 +88,7 @@ def build_subtree(
                 atom = arguebuf.AtomNode(
                     id=tweet.id,
                     text=text,
+                    resource=arguebuf.Reference(text=text),
                     metadata=arguebuf.Metadata(
                         created=parse_timestamp(tweet.created_at),
                         updated=pendulum.now(),
