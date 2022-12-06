@@ -423,7 +423,7 @@ cli = ["click (>=5.0)"]
 
 [[package]]
 name = "python-twitter-v2"
-version = "0.7.8"
+version = "0.8.0"
 description = "A simple Python wrapper for Twitter API v2 ✨ 🍰 ✨"
 category = "main"
 optional = false
@@ -594,7 +594,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "796af800c267f0acb164efb2c66d0651b2ade348e14387ac13cdf9bbb0734830"
+content-hash = "a12e4919636f6817cc10c322fc7483b2db72355885ada9b28443077bd958bcdb"
 
 [metadata.files]
 arg-services = [
@@ -962,8 +962,8 @@ python-dotenv = [
     {file = "python_dotenv-0.21.0-py3-none-any.whl", hash = "sha256:1684eb44636dd462b66c3ee016599815514527ad99965de77f43e0944634a7e5"},
 ]
 python-twitter-v2 = [
-    {file = "python-twitter-v2-0.7.8.tar.gz", hash = "sha256:bd21d08502dc6244f40096fb3c56e03d459601b594c08d6104fab6c9938b9e6f"},
-    {file = "python_twitter_v2-0.7.8-py3-none-any.whl", hash = "sha256:3321a9889f7e81f1a1b0ef21c654263c663f81290295f122b57f578950180f0c"},
+    {file = "python_twitter_v2-0.8.0-py3-none-any.whl", hash = "sha256:18c14853da8b499775a11a3f5e1d0692a7017fa41eca91ac5afa73f35b935a90"},
+    {file = "python_twitter_v2-0.8.0.tar.gz", hash = "sha256:fbe582ae7c6b33f6055b97e23dd106874e6650091d257fe67bfd024b96ebf8d6"},
 ]
 pytzdata = [
     {file = "pytzdata-2020.1-py2.py3-none-any.whl", hash = "sha256:e1e14750bcf95016381e4d472bad004eef710f2d6417240904070b3d6654485f"},
