@@ -9,15 +9,15 @@ homepage = "http://recap.uni-trier.de"
 # repository = "https://github.com/ReCAP-UTR/Argument-Graph-Retrieval-ProCAKE-Client"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.10"
-arguebuf = "^1.0.3"
+python = ">=3.8,<3.11"
+arguebuf = "^1.2.0"
 typer = "^0.7.0"
 python-dotenv = "^0.21.0"
 pendulum = "^2.1.2"
-twarc = "^2.11.1"
-arg-services = "^0.3.8"
+twarc = "^2.12.0"
+arg-services = "^0.3.10"
 python-twitter-v2 = "^0.8.0"
-rich = "^12.5.1"
+rich = "^12.6.0"
 
 [tool.poetry.dev-dependencies]
 nltk = "^3.7"
