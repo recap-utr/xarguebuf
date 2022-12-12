@@ -9,21 +9,15 @@ poetry run python -m twitter2arguebuf count --start-time 2020-02-03 --end-time 2
 
 ## Downloading Tweets
 
-Specify the query
-
-`QUERY="2020election OR #biden2020 OR #trump2020"`
-
-Save all tweet ids that match your query
-
-`poetry run python -m twarc search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" /dev/stdout | poetry run python -m twarc dehydrate - data/tweets.txt`
-
-Download the complete archive of all conversations that above tweets are part of
-
-`poetry run python -m twarc conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweets.txt data/conversations.jsonl`
-
-Convert the saved conversations to argument graphs
-
-`poetry run python -m twitter2arguebuf convert data conversations.jsonl --output-folder data/graphs --render --min-chars 50 --min-interactions 0 --min-depth 1`
+```sh
+QUERY="INSERT_YOUR_QUERY_HERE"
+# Save all tweet ids that match your query
+poetry run python -m twarc search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" /dev/stdout | poetry run python -m twarc dehydrate - data/tweets.txt
+# Download the complete archive of all conversations that above tweets are part of
+poetry run python -m twarc conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweets.txt data/conversations.jsonl
+# Convert the saved conversations to argument graphs
+poetry run python -m twitter2arguebuf convert data conversations.jsonl --output-folder data/graphs --render --min-chars 50 --min-interactions 0 --min-depth 1
+```
 
 ## Exemplary Queries
 
