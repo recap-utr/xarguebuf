@@ -7,7 +7,6 @@ from pathlib import Path
 import arguebuf
 import grpc
 import pendulum
-import typer
 from arg_services.mining.v1 import entailment_pb2, entailment_pb2_grpc
 from rich import print
 from rich.progress import track
