@@ -8,6 +8,8 @@ import arguebuf
 import grpc
 import pendulum
 from arg_services.mining.v1 import entailment_pb2, entailment_pb2_grpc
+from pendulum.datetime import DateTime
+from pendulum.parser import parse as dt_parse
 from rich import print
 from rich.progress import track
 
@@ -30,27 +32,34 @@ def parse_response(
     for line in track(f, "Reading file...", total=total_iterations):
         res = json.loads(line)
 
-        data = res["data"]
-        includes = res["includes"]
+        data = res.get("data")
+        includes = res.get("includes")
 
-        if not isinstance(data, list):
-            data = [data]
+        if data is not None:
+            if not isinstance(data, list):
+                data = [data]
 
-        for tweet in data + includes.get("tweets", tuple()):
-            tweets[tweet["id"]] = model.Tweet.from_dict(tweet)
-            conversations.add(tweet["conversation_id"])
+            if includes is not None and includes.get("tweets") is not None:
+                data.extend(includes["tweets"])
 
-        for user in includes.get("users", tuple()):
-            users[user["id"]] = model.User.from_dict(user)
+            for tweet in data:
+                tweets[tweet["id"]] = tweet
+
+                if tweet.get("conversation_id") is not None:
+                    conversations.add(tweet["conversation_id"])
+
+            if includes is not None and includes.get("users") is not None:
+                for user in includes["users"]:
+                    users[user["id"]] = user
 
     return conversations, tweets, users
 
 
-def parse_timestamp(value: t.Optional[str]) -> t.Optional[pendulum.DateTime]:
+def parse_timestamp(value: t.Optional[str]) -> t.Optional[DateTime]:
     if value:
-        timestamp = pendulum.parse(value)
+        timestamp = dt_parse(value)
 
-        if isinstance(timestamp, pendulum.DateTime):
+        if isinstance(timestamp, DateTime):
             return timestamp
 
     return None
@@ -82,63 +91,64 @@ def build_subtree(
     min_interactions: int,
 ) -> None:
     for tweet in tweets[parent.id]:
-        if tweet.id:
-            if (text := process_tweet(tweet.text, clean)) and len(text) > min_chars:
-                atom = arguebuf.AtomNode(
-                    id=tweet.id,
-                    text=text,
-                    resource=arguebuf.Reference(text=text),
-                    metadata=arguebuf.Metadata(
-                        created=parse_timestamp(tweet.created_at),
-                        updated=pendulum.now(),
-                    ),
-                    participant=participants[tweet.author_id]
-                    if tweet.author_id
-                    else None,
-                )
-                scheme_type = None
+        if (text := process_tweet(tweet["text"], clean)) and len(text) > min_chars:
+            atom = arguebuf.AtomNode(
+                id=tweet["id"],
+                text=text,
+                resource=arguebuf.Reference(text=text),
+                metadata=arguebuf.Metadata(
+                    created=parse_timestamp(tweet.get("created_at")),
+                    updated=pendulum.now(),
+                ),
+                participant=participants[tweet["author_id"]]
+                if tweet.get("author_id")
+                else None,
+            )
+            scheme_type = None
 
-                if client:
-                    prediction: entailment_pb2.EntailmentResponse = client.Entailment(
-                        entailment_pb2.EntailmentRequest(
-                            language=language,
-                            premise=atom.plain_text,
-                            claim=parent.plain_text,
-                        )
+            if client:
+                res: entailment_pb2.EntailmentResponse = client.Entailment(
+                    entailment_pb2.EntailmentRequest(
+                        language=language,
+                        premise=atom.plain_text,
+                        claim=parent.plain_text,
                     )
+                )
 
-                    if prediction == entailment_pb2.ENTAILMENT_TYPE_ENTAILMENT:
-                        scheme_type = arguebuf.Support.DEFAULT
+                if res.entailment_type == entailment_pb2.ENTAILMENT_TYPE_ENTAILMENT:
+                    scheme_type = arguebuf.Support.DEFAULT
 
-                    elif prediction == entailment_pb2.ENTAILMENT_TYPE_CONTRADICTION:
-                        scheme_type = arguebuf.Attack.DEFAULT
+                elif (
+                    res.entailment_type == entailment_pb2.ENTAILMENT_TYPE_CONTRADICTION
+                ):
+                    scheme_type = arguebuf.Attack.DEFAULT
 
-                scheme = arguebuf.SchemeNode(scheme_type, id=f"{atom.id},{parent.id}")
+            scheme = arguebuf.SchemeNode(scheme_type, id=f"{atom.id},{parent.id}")
 
-                if metrics := tweet.public_metrics:
-                    likes = metrics.like_count or 0
-                    replies = metrics.reply_count or 0
-                    quotes = metrics.quote_count or 0
-                    retweets = metrics.retweet_count or 0
+            if metrics := tweet.get("public_metrics"):
+                likes = metrics.get("like_count", 0)
+                replies = metrics.get("reply_count", 0)
+                quotes = metrics.get("quote_count", 0)
+                retweets = metrics.get("retweet_count", 0)
 
-                    if (
-                        likes + replies + quotes + retweets >= min_interactions
-                    ):  #  or level > 1
-                        g.add_edge(arguebuf.Edge(atom, scheme))
-                        g.add_edge(arguebuf.Edge(scheme, parent))
+                if (
+                    likes + replies + quotes + retweets >= min_interactions
+                ):  #  or level > 1
+                    g.add_edge(arguebuf.Edge(atom, scheme))
+                    g.add_edge(arguebuf.Edge(scheme, parent))
 
-                        build_subtree(
-                            level + 1,
-                            g,
-                            atom,
-                            tweets,
-                            participants,
-                            client,
-                            language,
-                            clean,
-                            min_chars,
-                            min_interactions,
-                        )
+                    build_subtree(
+                        level + 1,
+                        g,
+                        atom,
+                        tweets,
+                        participants,
+                        client,
+                        language,
+                        clean,
+                        min_chars,
+                        min_interactions,
+                    )
 
 
 def parse_referenced_tweets(
@@ -147,14 +157,14 @@ def parse_referenced_tweets(
     referenced_tweets: defaultdict[str, list[model.Tweet]] = defaultdict(list)
 
     for tweet_id, tweet in tweets.items():
-        if subtweets := tweet.referenced_tweets:
+        if subtweets := tweet.get("referenced_tweets"):
             for subtweet in subtweets:
                 if (
-                    subtweet.type == "replied_to"
-                    and subtweet.id
-                    and subtweet.id in tweets
+                    subtweet["type"] == "replied_to"
+                    and subtweet["id"]
+                    and subtweet["id"] in tweets
                 ):
-                    referenced_tweets[subtweet.id].append(tweets[tweet_id])
+                    referenced_tweets[subtweet["id"]].append(tweets[tweet_id])
 
     return referenced_tweets
 
@@ -165,20 +175,18 @@ def parse_participants(
     participants: dict[str, arguebuf.Participant] = {}
 
     for user in users.values():
-        assert user.id
-
-        participants[user.id] = arguebuf.Participant(
-            user.name,
-            user.username,
+        participants[user["id"]] = arguebuf.Participant(
+            user.get("name"),
+            user.get("username"),
             None,
-            user.url,
-            user.location,
-            user.description,
+            user.get("url"),
+            user.get("location"),
+            user.get("description"),
             metadata=arguebuf.Metadata(
-                created=parse_timestamp(user.created_at) or pendulum.now(),
+                created=parse_timestamp(user.get("created_at")) or pendulum.now(),
                 updated=pendulum.now(),
             ),
-            id=user.id,
+            id=user["id"],
         )
 
     return participants
@@ -195,15 +203,17 @@ def parse_graph(
     min_depth: int,
 ) -> arguebuf.Graph:
     g = arguebuf.Graph()
-    assert mc_tweet.id
+    assert mc_tweet.get("id")
 
     mc = arguebuf.AtomNode(
-        process_tweet(mc_tweet.text, clean),
+        process_tweet(mc_tweet["text"], clean),
         metadata=arguebuf.Metadata(
-            created=parse_timestamp(mc_tweet.created_at), updated=pendulum.now()
+            created=parse_timestamp(mc_tweet.get("created_at")), updated=pendulum.now()
         ),
-        participant=participants[mc_tweet.author_id] if mc_tweet.author_id else None,
-        id=mc_tweet.id,
+        participant=participants[mc_tweet["author_id"]]
+        if mc_tweet.get("author_id")
+        else None,
+        id=mc_tweet["id"],
     )
     g.add_node(mc)
     g.major_claim = mc
