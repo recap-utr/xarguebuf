@@ -1,5 +1,32 @@
 # Twitter2Arguebuf
 
+To convert the conversations to graphs, only the first section (Docker Usage) is relevant.
+Please ignore the sections afterwards (Counting Tweets and below).
+
+## Docker Usage
+
+### Building the Image
+
+This is necessary every time the source code changed (e.g., changes are pulled from GitHub).
+
+```sh
+docker build --tag twitter2arguebuf .
+```
+
+### Running the Image
+
+To read and write data, you have to bind a folder (e.g., `./data`) to the container.
+The command to run can be specified using the environment variable `cmd`.
+Thus, run it as follows:
+
+```sh
+docker run --rm -it -v $(pwd)/data:/app/data -e cmd="COMMAND_TO_RUN" twitter2arguebuf
+```
+
+To get an overview of the options, set `cmd="convert --help"`.
+As a start, you may want to try the following: `cmd="convert ./data/conversations.jsonl ./data/graphs --min-chars 50"`.
+_Please note:_ Graphs having more than 1000 nodes will not be rendered as this takes way too much time.
+
 ## Counting Tweets
 
 ```sh
