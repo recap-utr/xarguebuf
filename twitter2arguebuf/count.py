@@ -8,14 +8,13 @@ from twarc.client2 import Twarc2
 
 load_dotenv()
 
-client = Twarc2(bearer_token=os.getenv("BEARER_TOKEN"))
-
 
 def count(
     query: str,
     start_time: t.Optional[datetime] = None,
     end_time: t.Optional[datetime] = None,
 ):
+    client = Twarc2(bearer_token=os.getenv("BEARER_TOKEN"))
     response = client.counts_all(
         query,
         start_time=start_time,
