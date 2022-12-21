@@ -16,7 +16,7 @@ poetry run python -m twarc search --archive --sort-order relevancy --start-time 
 # Download the complete archive of all conversations that above tweets are part of
 poetry run python -m twarc conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweets.txt data/conversations.jsonl
 # Convert the saved conversations to argument graphs
-poetry run python -m twitter2arguebuf convert data conversations.jsonl --output-folder data/graphs --min-chars 50 --min-interactions 0 --min-depth 1
+poetry run python -m twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --min-chars 50 --min-interactions 0 --min-depth 1
 ```
 
 ## Exemplary Queries

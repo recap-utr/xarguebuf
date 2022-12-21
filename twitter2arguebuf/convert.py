@@ -7,6 +7,7 @@ from pathlib import Path
 import arguebuf
 import grpc
 import pendulum
+import typer
 from arg_services.mining.v1 import entailment_pb2, entailment_pb2_grpc
 from pendulum.datetime import DateTime
 from pendulum.parser import parse as dt_parse
@@ -201,6 +202,7 @@ def parse_graph(
     min_chars: int,
     min_interactions: int,
     min_depth: int,
+    max_depth: t.Optional[int],
 ) -> arguebuf.Graph:
     g = arguebuf.Graph()
     assert mc_tweet.get("id")
@@ -230,15 +232,24 @@ def parse_graph(
         language="en",
     )
 
+    # Remove nodes that do not match the depth criterions
     for leaf in g.leaf_nodes:
-        if g.node_distance(leaf, mc, min_depth, ignore_schemes=True):
+        min_depth_valid = (
+            g.node_distance(leaf, mc, min_depth, ignore_schemes=True) is None
+        )
+        max_depth_valid = (
+            max_depth is None
+            or g.node_distance(leaf, mc, max_depth, ignore_schemes=True) is not None
+        )
+
+        if not (min_depth_valid and max_depth_valid):
             nodes_to_remove = {leaf}
 
             while nodes_to_remove:
                 node_to_remove = nodes_to_remove.pop()
                 nodes_to_remove.update(g.outgoing_nodes(node_to_remove))
 
-                if node_to_remove.id != mc.id:
+                if len(g.incoming_nodes(node_to_remove)) == 0:
                     g.remove_node(node_to_remove)
 
     g.clean_participants()
@@ -261,15 +272,37 @@ def conversation_path(folder: Path, mc: t.Optional[arguebuf.AtomNode]):
 
 
 def convert(
-    input_folder: Path,
-    input_pattern: str,
-    output_folder: t.Optional[Path] = None,
-    entailment_address: t.Optional[str] = None,
-    render: bool = False,
-    clean: bool = True,
-    min_chars: int = 0,
-    min_interactions: int = 0,
-    min_depth: int = 0,
+    input_file: Path = typer.Argument(
+        ..., help="Path to `jsonl` file that should be processed."
+    ),
+    output_folder: Path = typer.Argument(
+        ..., help="Path to a folder where the processed graphs should be stored."
+    ),
+    entailment_address: t.Optional[str] = typer.Option(None, hidden=True),
+    render: bool = typer.Option(
+        False,
+        help="If `true`, the graphs will be rendered and stored as PDF files besides the source. Note: Only works in Docker or if graphviz is installed on your system.",
+    ),
+    clean: bool = typer.Option(
+        True,
+        help="By default, the texts of the tweets will be cleaned (e.g., resolve links and hide the initial user mention). Set to `no-clean` to disable.",
+    ),
+    min_chars: int = typer.Option(
+        0,
+        help="Number of characters a tweet should have to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
+    ),
+    min_interactions: int = typer.Option(
+        0,
+        help="Number of interactions (likes + replies + quotes + retweets) a tweet should have to be included in the graph. Note: If a tweet has less interactions, all replies to it will be removed as well.",
+    ),
+    min_depth: int = typer.Option(
+        0,
+        help="Minimum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with fewer tweets are removed from the graph.",
+    ),
+    max_depth: t.Optional[int] = typer.Option(
+        None,
+        help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
+    ),
 ):
     client = (
         entailment_pb2_grpc.EntailmentServiceStub(
@@ -279,37 +312,51 @@ def convert(
         else None
     )
 
-    for input_file in input_folder.glob(input_pattern):
-        print(f"Processing '{input_file}'")
+    output_folder.mkdir(parents=True, exist_ok=True)
+    with (output_folder / "config.json").open("w") as fp:
+        json.dump(
+            {
+                "clean": clean,
+                "min-chars": min_chars,
+                "min-interactions": min_interactions,
+                "min-depth": min_depth,
+                "max-depth": max_depth,
+            },
+            fp,
+        )
 
-        with input_file.open("r", encoding="utf-8") as f:
-            conversation_ids, tweets, users = parse_response(f)
+    print(f"Processing '{input_file}'")
 
-        referenced_tweets = parse_referenced_tweets(tweets)
-        participants = parse_participants(users)
+    with input_file.open("r", encoding="utf-8") as f:
+        conversation_ids, tweets, users = parse_response(f)
 
-        for conversation_id in track(
-            conversation_ids, description=f"Converting tweets..."
-        ):
-            if mc_tweet := tweets.get(conversation_id):
-                g = parse_graph(
-                    mc_tweet,
-                    referenced_tweets,
-                    participants,
-                    client,
-                    clean,
-                    min_chars,
-                    min_interactions,
-                    min_depth,
-                )
+    referenced_tweets = parse_referenced_tweets(tweets)
+    participants = parse_participants(users)
 
-                if len(g.atom_nodes) > 1:
-                    output_path = conversation_path(
-                        output_folder or input_folder, g.major_claim
-                    )
-                    output_path.parent.mkdir(parents=True, exist_ok=True)
+    for conversation_id in track(conversation_ids, description=f"Converting tweets..."):
+        if mc_tweet := tweets.get(conversation_id):
+            g = parse_graph(
+                mc_tweet,
+                referenced_tweets,
+                participants,
+                client,
+                clean,
+                min_chars,
+                min_interactions,
+                min_depth,
+                max_depth,
+            )
 
-                    g.to_file(output_path.with_suffix(".json"))
+            if len(g.atom_nodes) > 1:
+                output_path = conversation_path(output_folder, g.major_claim)
+                output_path.parent.mkdir(exist_ok=True)
 
-                    if render:
-                        arguebuf.render(g.to_gv("svg"), output_path.with_suffix(".svg"))
+                g.to_file(output_path.with_suffix(".json"))
+
+                if render:
+                    try:
+                        arguebuf.render(
+                            arguebuf.to_gv(g), output_path.with_suffix(".svg")
+                        )
+                    except Exception as e:
+                        print(f"Error when trying to render {output_path}:\n{e}")
