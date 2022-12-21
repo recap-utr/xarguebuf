@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "Twitter2Arguebuf"
-version = "0.1.0"
+name = "twitter2arguebuf"
+version = "1.0.0"
 description = "Microservice for creating argument graphs from Twitter discussions"
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 license = "MIT"
@@ -10,7 +10,7 @@ homepage = "http://recap.uni-trier.de"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
-arguebuf = "^1.2.0"
+arguebuf = { version = "^2.0.0b2", extras = ["graphviz"] }
 typer = "^0.7.0"
 python-dotenv = "^0.21.0"
 pendulum = "^2.1.2"
