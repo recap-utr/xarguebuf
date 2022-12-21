@@ -6,7 +6,7 @@ authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 license = "MIT"
 readme = "README.md"
 homepage = "http://recap.uni-trier.de"
-# repository = "https://github.com/ReCAP-UTR/Argument-Graph-Retrieval-ProCAKE-Client"
+repository = "https://github.com/recap-utr/twitter2arguebuf"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
@@ -22,5 +22,5 @@ rich = "^12.6.0"
 nltk = "^3.7"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
