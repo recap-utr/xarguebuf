@@ -93,7 +93,11 @@ def build_subtree(
     min_interactions: int,
 ) -> None:
     for tweet in tweets[parent.id]:
-        if (text := process_tweet(tweet["text"], clean)) and len(text) > min_chars:
+        if (
+            (text := process_tweet(tweet["text"], clean))
+            and len(text) > min_chars
+            and tweet["lang"] == language
+        ):
             atom = arguebuf.AtomNode(
                 id=tweet["id"],
                 text=text,
@@ -204,6 +208,7 @@ def parse_graph(
     min_interactions: int,
     min_depth: int,
     max_depth: t.Optional[int],
+    language: str,
 ) -> arguebuf.Graph:
     g = arguebuf.Graph()
     assert mc_tweet.get("id")
@@ -304,6 +309,7 @@ def convert(
         None,
         help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
     ),
+    language=typer.Option("en", help="Only include tweets with matching language"),
 ):
     client = (
         entailment_pb2_grpc.EntailmentServiceStub(
@@ -322,6 +328,7 @@ def convert(
                 "min-interactions": min_interactions,
                 "min-depth": min_depth,
                 "max-depth": max_depth,
+                "language": language
             },
             fp,
         )
@@ -346,6 +353,7 @@ def convert(
                 min_interactions,
                 min_depth,
                 max_depth,
+                language,
             )
 
             if len(g.atom_nodes) > 1:
