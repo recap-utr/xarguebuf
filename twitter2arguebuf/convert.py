@@ -16,8 +16,9 @@ from rich.progress import track
 
 from twitter2arguebuf import model
 
-handle_pattern = re.compile(r"^@\w+")
-url_pattern = re.compile(r"https?:\/\/t.co\/\w+")
+HANDLE_PATTERN = re.compile(r"^@\w+")
+URL_PATTERN = re.compile(r"https?:\/\/t.co\/\w+")
+# https://developer.twitter.com/en/docs/twitter-api/tweets/search/api-reference/get-tweets-search-all
 
 
 def parse_response(
@@ -68,11 +69,11 @@ def parse_timestamp(value: t.Optional[str]) -> t.Optional[DateTime]:
 
 def process_tweet(text: t.Optional[str], clean: bool) -> t.Optional[str]:
     if clean and text:
-        text = url_pattern.sub("", text)
+        text = URL_PATTERN.sub("", text)
         text = text.strip()
 
-        while handle_pattern.search(text):
-            text = handle_pattern.sub("", text).strip()
+        while HANDLE_PATTERN.search(text):
+            text = HANDLE_PATTERN.sub("", text).strip()
 
         text = text.replace("  ", " ")
 
