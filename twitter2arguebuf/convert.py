@@ -91,6 +91,7 @@ def build_subtree(
     clean: bool,
     min_chars: int,
     min_interactions: int,
+    userdata: t.AbstractSet[str],
 ) -> None:
     for tweet in tweets[parent.id]:
         if (
@@ -106,6 +107,7 @@ def build_subtree(
                     created=parse_timestamp(tweet.get("created_at")),
                     updated=pendulum.now(),
                 ),
+                userdata={key: tweet[key] for key in tweet if key in userdata},
                 participant=participants[tweet["author_id"]]
                 if tweet.get("author_id")
                 else None,
@@ -154,6 +156,7 @@ def build_subtree(
                         clean,
                         min_chars,
                         min_interactions,
+                        userdata,
                     )
 
 
@@ -208,6 +211,7 @@ def parse_graph(
     min_interactions: int,
     min_depth: int,
     max_depth: t.Optional[int],
+    userdata: t.AbstractSet[str],
     language: str,
 ) -> arguebuf.Graph:
     g = arguebuf.Graph()
@@ -235,7 +239,8 @@ def parse_graph(
         clean=clean,
         min_chars=min_chars,
         min_interactions=min_interactions,
-        language="en",
+        language=language,
+        userdata=userdata,
     )
 
     # Remove nodes that do not match the depth criterions
@@ -309,6 +314,18 @@ def convert(
         None,
         help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
     ),
+    userdata: t.List[str] = typer.Option(
+        [
+            "public_metrics",
+            "context_annotations",
+            "entities",
+            "possibly_sentitive",
+            "attachments",
+            "geo",
+            "source",
+        ],
+        help="Additional fields of the `tweet` api response that shall be stored as `userdata` in the arguebuf file (if returned by Twitter).",
+    ),
     language=typer.Option("en", help="Only include tweets with matching language"),
 ):
     client = (
@@ -318,6 +335,7 @@ def convert(
         if entailment_address
         else None
     )
+    userdata_set = set(userdata)
 
     output_folder.mkdir(parents=True, exist_ok=True)
     with (output_folder / "config.json").open("w") as fp:
@@ -328,6 +346,7 @@ def convert(
                 "min-interactions": min_interactions,
                 "min-depth": min_depth,
                 "max-depth": max_depth,
+                "userdata": userdata,
                 "language": language
             },
             fp,
@@ -353,6 +372,7 @@ def convert(
                 min_interactions,
                 min_depth,
                 max_depth,
+                userdata_set,
                 language,
             )
 
