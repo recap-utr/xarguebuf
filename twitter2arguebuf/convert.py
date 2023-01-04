@@ -106,8 +106,20 @@ class GraphConfig:
             help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
         ),
     )
-    min_nodes: int = t.cast(int, ts.option(default=1, help=""))
-    max_nodes: int = t.cast(int, ts.option(default=sys.maxsize, help=""))
+    min_nodes: int = t.cast(
+        int,
+        ts.option(
+            default=1,
+            help="Minimum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has fewer nodes, the graph is not stored.",
+        ),
+    )
+    max_nodes: int = t.cast(
+        int,
+        ts.option(
+            default=sys.maxsize,
+            help="Maximum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has more nodes, the graph is not stored.",
+        ),
+    )
 
 
 @ts.settings(frozen=True)
