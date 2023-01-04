@@ -1,11 +1,8 @@
-import typer
+import rich_click as click
 
 from . import convert, count
 
-app = typer.Typer()
-
-app.command()(convert.convert)
-app.command()(count.count)
+app = click.CommandCollection(sources=[convert.cli, count.cli])
 
 if __name__ == "__main__":
     app()

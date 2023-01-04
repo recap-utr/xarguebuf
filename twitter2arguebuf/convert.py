@@ -1,13 +1,16 @@
 import json
 import re
+import sys
 import typing as t
 from collections import defaultdict
 from pathlib import Path
 
 import arguebuf
+import attrs
 import grpc
 import pendulum
-import typer
+import rich_click as click
+import typed_settings as ts
 from arg_services.mining.v1 import entailment_pb2, entailment_pb2_grpc
 from pendulum.datetime import DateTime
 from pendulum.parser import parse as dt_parse
@@ -19,6 +22,98 @@ from twitter2arguebuf import model
 HANDLE_PATTERN = re.compile(r"^@\w+")
 URL_PATTERN = re.compile(r"https?:\/\/t.co\/\w+")
 # https://developer.twitter.com/en/docs/twitter-api/tweets/search/api-reference/get-tweets-search-all
+
+
+@ts.settings(frozen=True)
+class TweetConfig:
+    raw_text: bool = t.cast(
+        bool,
+        ts.option(
+            default=False,
+            click={"param_decls": ("--raw-text", "flag"), "is_flag": True},
+            help="By default, the texts of the tweets will be cleaned (e.g., resolve links and hide the initial user mention). Set to `no-clean` to disable.",
+        ),
+    )
+    min_chars: int = t.cast(
+        int,
+        ts.option(
+            default=0,
+            help="Number of characters a tweet should have to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
+        ),
+    )
+    max_chars: int = t.cast(
+        int,
+        ts.option(
+            default=sys.maxsize,
+            help="Number of characters a tweet should have at most to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
+        ),
+    )
+    min_interactions: int = t.cast(
+        int,
+        ts.option(
+            default=0,
+            help="Number of interactions (likes + replies + quotes + retweets) a tweet should have to be included in the graph. Note: If a tweet has less interactions, all replies to it will be removed as well.",
+        ),
+    )
+    max_interactions: int = t.cast(
+        int,
+        ts.option(
+            default=sys.maxsize,
+            help="Number of interactions (likes + replies + quotes + retweets) a tweet should have at most to be included in the graph. Note: If a tweet has more interactions, all replies to it will be removed as well.",
+        ),
+    )
+    userdata: t.List[str] = t.cast(
+        t.List[str],
+        ts.option(
+            factory=lambda: [
+                "public_metrics",
+                "context_annotations",
+                "entities",
+                "possibly_sentitive",
+                "attachments",
+                "geo",
+                "source",
+            ],
+            help="Additional fields of the `tweet` api response that shall be stored as `userdata` in the arguebuf file (if returned by Twitter).",
+        ),
+    )
+    language: str = t.cast(
+        str, ts.option(default="en", help="Only include tweets with matching language")
+    )
+
+
+@ts.settings(frozen=True)
+class GraphConfig:
+    render: bool = t.cast(
+        bool,
+        ts.option(
+            default=False,
+            click={"param_decls": ("--graph-render", "flag"), "is_flag": True},
+            help="If set, the graphs will be rendered and stored as PDF files besides the source. Note: Only works in Docker or if graphviz is installed on your system.",
+        ),
+    )
+    min_depth: int = t.cast(
+        int,
+        ts.option(
+            default=0,
+            help="Minimum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with fewer tweets are removed from the graph.",
+        ),
+    )
+    max_depth: int = t.cast(
+        int,
+        ts.option(
+            default=sys.maxsize,
+            help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
+        ),
+    )
+    min_nodes: int = t.cast(int, ts.option(default=1, help=""))
+    max_nodes: int = t.cast(int, ts.option(default=sys.maxsize, help=""))
+
+
+@ts.settings(frozen=True)
+class Config:
+    graph: GraphConfig = GraphConfig()
+    tweet: TweetConfig = TweetConfig()
 
 
 def parse_response(
@@ -67,8 +162,8 @@ def parse_timestamp(value: t.Optional[str]) -> t.Optional[DateTime]:
     return None
 
 
-def process_tweet(text: t.Optional[str], clean: bool) -> t.Optional[str]:
-    if clean and text:
+def process_tweet(text: t.Optional[str], raw_text: bool) -> t.Optional[str]:
+    if text and not raw_text:
         text = URL_PATTERN.sub("", text)
         text = text.strip()
 
@@ -87,17 +182,14 @@ def build_subtree(
     tweets: t.Mapping[str, t.Collection[model.Tweet]],
     participants: t.Mapping[str, arguebuf.Participant],
     client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
-    language: str,
-    clean: bool,
-    min_chars: int,
-    min_interactions: int,
-    userdata: t.AbstractSet[str],
+    config: Config,
 ) -> None:
     for tweet in tweets[parent.id]:
         if (
-            (text := process_tweet(tweet["text"], clean))
-            and len(text) > min_chars
-            and tweet["lang"] == language
+            (text := process_tweet(tweet["text"], config.tweet.raw_text))
+            and len(text) >= config.tweet.min_chars
+            and len(text) <= config.tweet.max_chars
+            and tweet["lang"] == config.tweet.language
         ):
             atom = arguebuf.AtomNode(
                 id=tweet["id"],
@@ -107,7 +199,9 @@ def build_subtree(
                     created=parse_timestamp(tweet.get("created_at")),
                     updated=pendulum.now(),
                 ),
-                userdata={key: tweet[key] for key in tweet if key in userdata},
+                userdata={
+                    key: tweet[key] for key in config.tweet.userdata if key in tweet
+                },
                 participant=participants[tweet["author_id"]]
                 if tweet.get("author_id")
                 else None,
@@ -117,7 +211,7 @@ def build_subtree(
             if client:
                 res: entailment_pb2.EntailmentResponse = client.Entailment(
                     entailment_pb2.EntailmentRequest(
-                        language=language,
+                        language=config.tweet.language,
                         premise=atom.plain_text,
                         claim=parent.plain_text,
                     )
@@ -138,25 +232,17 @@ def build_subtree(
                 replies = metrics.get("reply_count", 0)
                 quotes = metrics.get("quote_count", 0)
                 retweets = metrics.get("retweet_count", 0)
+                interactions = likes + replies + quotes + retweets
 
                 if (
-                    likes + replies + quotes + retweets >= min_interactions
+                    interactions >= config.tweet.min_interactions
+                    and interactions <= config.tweet.max_interactions
                 ):  #  or level > 1
                     g.add_edge(arguebuf.Edge(atom, scheme))
                     g.add_edge(arguebuf.Edge(scheme, parent))
 
                     build_subtree(
-                        level + 1,
-                        g,
-                        atom,
-                        tweets,
-                        participants,
-                        client,
-                        language,
-                        clean,
-                        min_chars,
-                        min_interactions,
-                        userdata,
+                        level + 1, g, atom, tweets, participants, client, config
                     )
 
 
@@ -206,19 +292,13 @@ def parse_graph(
     referenced_tweets: t.Mapping[str, t.Collection[model.Tweet]],
     participants: t.Mapping[str, arguebuf.Participant],
     client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
-    clean: bool,
-    min_chars: int,
-    min_interactions: int,
-    min_depth: int,
-    max_depth: t.Optional[int],
-    userdata: t.AbstractSet[str],
-    language: str,
+    config: Config,
 ) -> arguebuf.Graph:
     g = arguebuf.Graph()
     assert mc_tweet.get("id")
 
     mc = arguebuf.AtomNode(
-        process_tweet(mc_tweet["text"], clean),
+        process_tweet(mc_tweet["text"], config.tweet.raw_text),
         metadata=arguebuf.Metadata(
             created=parse_timestamp(mc_tweet.get("created_at")), updated=pendulum.now()
         ),
@@ -236,21 +316,19 @@ def parse_graph(
         client=client,
         tweets=referenced_tweets,
         participants=participants,
-        clean=clean,
-        min_chars=min_chars,
-        min_interactions=min_interactions,
-        language=language,
-        userdata=userdata,
+        config=config,
     )
 
     # Remove nodes that do not match the depth criterions
     for leaf in g.leaf_nodes:
         min_depth_valid = (
-            g.node_distance(leaf, mc, min_depth, ignore_schemes=True) is None
+            g.node_distance(leaf, mc, config.graph.min_depth, ignore_schemes=True)
+            is None
         )
         max_depth_valid = (
-            max_depth is None
-            or g.node_distance(leaf, mc, max_depth, ignore_schemes=True) is not None
+            config.graph.max_depth is sys.maxsize
+            or g.node_distance(leaf, mc, config.graph.max_depth, ignore_schemes=True)
+            is not None
         )
 
         if not (min_depth_valid and max_depth_valid):
@@ -282,52 +360,31 @@ def conversation_path(folder: Path, mc: t.Optional[arguebuf.AtomNode]):
     )
 
 
+@click.group()
+def cli():
+    pass
+
+
+@cli.command("convert")
+@click.argument(
+    "input_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    # help="Path to `jsonl` file that should be processed.",
+)
+@click.argument(
+    "output_folder",
+    type=click.Path(writable=True, file_okay=False, path_type=Path),
+    # help="Path to a folder where the processed graphs should be stored.",
+)
+@click.option("--entailment-address", hidden=True, default=None)
+@ts.click_options(Config, "twitter2arguebuf.convert")
 def convert(
-    input_file: Path = typer.Argument(
-        ..., help="Path to `jsonl` file that should be processed."
-    ),
-    output_folder: Path = typer.Argument(
-        ..., help="Path to a folder where the processed graphs should be stored."
-    ),
-    entailment_address: t.Optional[str] = typer.Option(None, hidden=True),
-    render: bool = typer.Option(
-        False,
-        help="If `true`, the graphs will be rendered and stored as PDF files besides the source. Note: Only works in Docker or if graphviz is installed on your system.",
-    ),
-    clean: bool = typer.Option(
-        True,
-        help="By default, the texts of the tweets will be cleaned (e.g., resolve links and hide the initial user mention). Set to `no-clean` to disable.",
-    ),
-    min_chars: int = typer.Option(
-        0,
-        help="Number of characters a tweet should have to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
-    ),
-    min_interactions: int = typer.Option(
-        0,
-        help="Number of interactions (likes + replies + quotes + retweets) a tweet should have to be included in the graph. Note: If a tweet has less interactions, all replies to it will be removed as well.",
-    ),
-    min_depth: int = typer.Option(
-        0,
-        help="Minimum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with fewer tweets are removed from the graph.",
-    ),
-    max_depth: t.Optional[int] = typer.Option(
-        None,
-        help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
-    ),
-    userdata: t.List[str] = typer.Option(
-        [
-            "public_metrics",
-            "context_annotations",
-            "entities",
-            "possibly_sentitive",
-            "attachments",
-            "geo",
-            "source",
-        ],
-        help="Additional fields of the `tweet` api response that shall be stored as `userdata` in the arguebuf file (if returned by Twitter).",
-    ),
-    language=typer.Option("en", help="Only include tweets with matching language"),
+    config: Config,
+    input_file: Path,
+    output_folder: Path,
+    entailment_address: t.Optional[str],
 ):
+    """Convert INPUT_FILE (.jsonl) to argument graphs and save them to OUTPUT_FOLDER"""
     client = (
         entailment_pb2_grpc.EntailmentServiceStub(
             grpc.insecure_channel(entailment_address)
@@ -335,20 +392,11 @@ def convert(
         if entailment_address
         else None
     )
-    userdata_set = set(userdata)
 
     output_folder.mkdir(parents=True, exist_ok=True)
     with (output_folder / "config.json").open("w") as fp:
         json.dump(
-            {
-                "clean": clean,
-                "min-chars": min_chars,
-                "min-interactions": min_interactions,
-                "min-depth": min_depth,
-                "max-depth": max_depth,
-                "userdata": userdata,
-                "language": language
-            },
+            attrs.asdict(config),
             fp,
         )
 
@@ -362,27 +410,18 @@ def convert(
 
     for conversation_id in track(conversation_ids, description=f"Converting tweets..."):
         if mc_tweet := tweets.get(conversation_id):
-            g = parse_graph(
-                mc_tweet,
-                referenced_tweets,
-                participants,
-                client,
-                clean,
-                min_chars,
-                min_interactions,
-                min_depth,
-                max_depth,
-                userdata_set,
-                language,
-            )
+            g = parse_graph(mc_tweet, referenced_tweets, participants, client, config)
 
-            if len(g.atom_nodes) > 1:
+            if (
+                len(g.atom_nodes) >= config.graph.min_nodes
+                and len(g.atom_nodes) <= config.graph.max_nodes
+            ):
                 output_path = conversation_path(output_folder, g.major_claim)
                 output_path.parent.mkdir(exist_ok=True)
 
                 g.to_file(output_path.with_suffix(".json"))
 
-                if render:
+                if config.graph.render:
                     try:
                         arguebuf.render(
                             arguebuf.to_gv(g), output_path.with_suffix(".svg")

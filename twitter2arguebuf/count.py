@@ -2,6 +2,7 @@ import os
 import typing as t
 from datetime import datetime
 
+import rich_click as click
 from dotenv import load_dotenv
 from rich import print
 from twarc.client2 import Twarc2
@@ -9,6 +10,12 @@ from twarc.client2 import Twarc2
 load_dotenv()
 
 
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
 def count(
     query: str,
     start_time: t.Optional[datetime] = None,

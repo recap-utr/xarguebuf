@@ -24,7 +24,7 @@ docker run --rm -it -v $(pwd)/data:/app/data -e cmd="COMMAND_TO_RUN" twitter2arg
 ```
 
 To get an overview of the options, set `cmd="convert --help"`.
-As a start, you may want to try the following: `cmd="convert ./data/conversations.jsonl ./data/graphs --min-chars 50"`.
+As a start, you may want to try the following: `cmd="convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50"`.
 _Please note:_ Graphs having more than 1000 nodes will not be rendered as this takes way too much time.
 
 ## Counting Tweets
@@ -43,7 +43,7 @@ poetry run python -m twarc search --archive --sort-order relevancy --start-time 
 # Download the complete archive of all conversations that above tweets are part of
 poetry run python -m twarc conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweets.txt data/conversations.jsonl
 # Convert the saved conversations to argument graphs
-poetry run python -m twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --min-chars 50 --min-interactions 0 --min-depth 1
+poetry run python -m twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50 --tweet-min-interactions 0 --graph-min-depth 1
 ```
 
 ## Exemplary Queries

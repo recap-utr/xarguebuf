@@ -19,28 +19,63 @@ protobuf = ">=4.21.12,<5.0.0"
 
 [[package]]
 name = "arguebuf"
-version = "2.0.0b2"
+version = "2.0.0b4"
 description = "A library for loading argument graphs in various formats (e.g., AIF)."
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "arguebuf-2.0.0b2-py3-none-any.whl", hash = "sha256:f68af499c52954eae8d2d0f9a9eeb52a7da9e2b2dfc94bcacc15d9d869489b0d"},
-    {file = "arguebuf-2.0.0b2.tar.gz", hash = "sha256:e2c4cbf04645f91e2621b2534e11cbb55b3552069562f945a59c82ce5c4d6b3d"},
+    {file = "arguebuf-2.0.0b4-py3-none-any.whl", hash = "sha256:7f9c446cca6f2ca14114b433aace365b1a49f051211a5c9a6e7f86fe683eb17a"},
+    {file = "arguebuf-2.0.0b4.tar.gz", hash = "sha256:d185494512f2f917fa3a979319bf86d25cf7728746b1b8102993af203668d1b7"},
 ]
 
 [package.dependencies]
 arg-services = ">=1.0.2,<2.0.0"
-graphviz = ">=0.20,<0.21"
-lxml = ">=4.9.0,<5.0.0"
-networkx = ">=2.8.4,<3.0.0"
+graphviz = ">=0.20.1,<0.21.0"
+lxml = ">=4.9.2,<5.0.0"
+networkx = ">=2.8.8,<3.0.0"
 pendulum = ">=2.1.2,<3.0.0"
 pygraphviz = {version = ">=1.10,<2.0", optional = true, markers = "extra == \"graphviz\""}
 
 [package.extras]
-cli = ["deepl (>=1.11.0,<2.0.0)", "multimethod (>=1.9,<2.0)", "typer[all] (>=0.7.0,<0.8.0)"]
-docs = ["autodocsumm (>=0.2.8,<0.3.0)", "furo (>=2022.6.4.1,<2023.0.0.0)", "myst-parser (>=0.18.0,<0.19.0)", "sphinx (>=5.0.0,<6.0.0)", "sphinx-autoapi (>=2.0.0,<3.0.0)"]
+cli = ["deepl (>=1.11.0,<2.0.0)", "multimethod (>=1.9.1,<2.0.0)", "typer[all] (>=0.7.0,<0.8.0)"]
+docs = ["autodocsumm (>=0.2.9,<0.3.0)", "furo (>=2022.12.7,<2023.0.0)", "myst-parser (>=0.18.1,<0.19.0)", "sphinx (>=5.0.0,<6.0.0)", "sphinx-autoapi (>=2.0.0,<3.0.0)"]
 graphviz = ["pygraphviz (>=1.10,<2.0)"]
+
+[[package]]
+name = "attrs"
+version = "22.2.0"
+description = "Classes Without Boilerplate"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "attrs-22.2.0-py3-none-any.whl", hash = "sha256:29e95c7f6778868dbd49170f98f8818f78f3dc5e0e37c0b1f474e3561b240836"},
+    {file = "attrs-22.2.0.tar.gz", hash = "sha256:c9227bfc2f01993c03f68db37d1d15c9690188323c067c641f1a35ca58185f99"},
+]
+
+[package.extras]
+cov = ["attrs[tests]", "coverage-enable-subprocess", "coverage[toml] (>=5.3)"]
+dev = ["attrs[docs,tests]"]
+docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-towncrier", "towncrier", "zope.interface"]
+tests = ["attrs[tests-no-zope]", "zope.interface"]
+tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy (>=0.971,<0.990)", "mypy (>=0.971,<0.990)", "pympler", "pympler", "pytest (>=4.3.0)", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-mypy-plugins", "pytest-xdist[psutil]", "pytest-xdist[psutil]"]
+
+[[package]]
+name = "cattrs"
+version = "22.2.0"
+description = "Composable complex class support for attrs and dataclasses."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "cattrs-22.2.0-py3-none-any.whl", hash = "sha256:bc12b1f0d000b9f9bee83335887d532a1d3e99a833d1bf0882151c97d3e68c21"},
+    {file = "cattrs-22.2.0.tar.gz", hash = "sha256:f0eed5642399423cf656e7b66ce92cdc5b963ecafd041d1b24d136fdde7acf6d"},
+]
+
+[package.dependencies]
+attrs = ">=20"
+exceptiongroup = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "certifi"
@@ -158,6 +193,21 @@ files = [
 
 [package.dependencies]
 six = "*"
+
+[[package]]
+name = "exceptiongroup"
+version = "1.1.0"
+description = "Backport of PEP 654 (exception groups)"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "exceptiongroup-1.1.0-py3-none-any.whl", hash = "sha256:327cbda3da756e2de031a3107b81ab7b3770a602c4d16ca618298c526f4bec1e"},
+    {file = "exceptiongroup-1.1.0.tar.gz", hash = "sha256:bcb67d800a4497e1b404c2dd44fca47d3b7a5e5433dbab67f96c1a685cdfdf23"},
+]
+
+[package.extras]
+test = ["pytest (>=6)"]
 
 [[package]]
 name = "graphviz"
@@ -403,14 +453,14 @@ test = ["codecov (>=2.1)", "pytest (>=7.2)", "pytest-cov (>=4.0)"]
 
 [[package]]
 name = "nltk"
-version = "3.8"
+version = "3.8.1"
 description = "Natural Language Toolkit"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "nltk-3.8-py3-none-any.whl", hash = "sha256:3306502f487aa9fb0566e23443fa287a85a8d8d0821e2ef1655b4e3f0ea4aeee"},
-    {file = "nltk-3.8.zip", hash = "sha256:74b30826a37d78d53427105bbd037dd880251be269fca64ee530838a46ed55fc"},
+    {file = "nltk-3.8.1-py3-none-any.whl", hash = "sha256:fd5c9109f976fa86bcadba8f91e47f5e9293bd034474752e92a520f81c93dda5"},
+    {file = "nltk-3.8.1.zip", hash = "sha256:1834da3d0682cba4f2cede2f9aad6b0fafb6461ba451db0efb6f9c39798d64d3"},
 ]
 
 [package.dependencies]
@@ -505,14 +555,14 @@ files = [
 
 [[package]]
 name = "pygments"
-version = "2.13.0"
+version = "2.14.0"
 description = "Pygments is a syntax highlighting package written in Python."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "Pygments-2.13.0-py3-none-any.whl", hash = "sha256:f643f331ab57ba3c9d89212ee4a2dabc6e94f117cf4eefde99a0574720d14c42"},
-    {file = "Pygments-2.13.0.tar.gz", hash = "sha256:56a8508ae95f98e2b9bdf93a6be5ae3f7d8af858b43e02c5a2ff083726be40c1"},
+    {file = "Pygments-2.14.0-py3-none-any.whl", hash = "sha256:fa7bd7bd2771287c0de303af8bfdfc731f51bd2c6a47ab69d117138893b82717"},
+    {file = "Pygments-2.14.0.tar.gz", hash = "sha256:b3ed06a9e8ac9a9aae5a6f5dbe78a8a58655d17b43b93c078f094ddc476ae297"},
 ]
 
 [package.extras]
@@ -731,6 +781,25 @@ typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.9
 jupyter = ["ipywidgets (>=7.5.1,<8.0.0)"]
 
 [[package]]
+name = "rich-click"
+version = "1.6.0"
+description = "Format click help output nicely with rich"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "rich-click-1.6.0.tar.gz", hash = "sha256:33799c31f8817101f2eb8fe90e95d2c2acd428a567ee64358ca487f963f75e9c"},
+    {file = "rich_click-1.6.0-py3-none-any.whl", hash = "sha256:aefb0450c22462cf3bf9fa854457e6b3cdf692073174823a00d3b0541a81b19d"},
+]
+
+[package.dependencies]
+click = ">=7"
+rich = ">=10.7.0"
+
+[package.extras]
+dev = ["pre-commit"]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -740,6 +809,18 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+
+[[package]]
+name = "tomli"
+version = "2.0.1"
+description = "A lil' TOML parser"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
+    {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 
 [[package]]
@@ -765,14 +846,14 @@ telegram = ["requests"]
 
 [[package]]
 name = "twarc"
-version = "2.12.0"
+version = "2.13.0"
 description = "Archive tweets from the command line"
 category = "main"
 optional = false
-python-versions = ">=3.3"
+python-versions = ">=3.6"
 files = [
-    {file = "twarc-2.12.0-py3-none-any.whl", hash = "sha256:7986767ab3decc280512cd87711b7a698bd81cfc552cba72cc4f542ad66f3d37"},
-    {file = "twarc-2.12.0.tar.gz", hash = "sha256:bc64d6765d9b98ef9d8b79aa69dbf9615f3b24bc29b7a659d42d25208e48d618"},
+    {file = "twarc-2.13.0-py3-none-any.whl", hash = "sha256:2227dad87fb5dab355f726a49e40b3a22afc3923905e297e000c65cbb28a1038"},
+    {file = "twarc-2.13.0.tar.gz", hash = "sha256:b56767533611f8dff1c9ebbf3c37baf9df5615a0c2274f4eec7e34eab6f686de"},
 ]
 
 [package.dependencies]
@@ -785,25 +866,31 @@ requests-oauthlib = ">=1.3"
 tqdm = ">=4.62"
 
 [[package]]
-name = "typer"
-version = "0.7.0"
-description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
+name = "typed-settings"
+version = "2.0.0"
+description = "Typed settings based on attrs classes"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "typer-0.7.0-py3-none-any.whl", hash = "sha256:b5e704f4e48ec263de1c0b3a2387cd405a13767d2f907f44c1a08cbad96f606d"},
-    {file = "typer-0.7.0.tar.gz", hash = "sha256:ff797846578a9f2a201b53442aedeb543319466870fbe1c701eab66dd7681165"},
+    {file = "typed_settings-2.0.0-py3-none-any.whl", hash = "sha256:ab74a95307f41b4da88f3b7e3081a48419f13eac0eba92f847fb99478e9f12a8"},
+    {file = "typed_settings-2.0.0.tar.gz", hash = "sha256:a3470f0ffeff0d2f5a52d2c3035621c4aaf150313b125bf807bce52954ac1494"},
 ]
 
 [package.dependencies]
-click = ">=7.1.1,<9.0.0"
+attrs = ">=22.1"
+cattrs = ">=22.2"
+click = {version = ">=7,<9", optional = true, markers = "extra == \"click\""}
+tomli = {version = ">=2", markers = "python_version < \"3.11\""}
 
 [package.extras]
-all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<13.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
-dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
-doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
-test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.910)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<13.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
+all = ["typed-settings[click,option-groups]"]
+click = ["click (>=7,<9)"]
+dev = ["nox", "safety", "typed-settings[docs,lint,test]"]
+docs = ["furo", "sphinx", "typed-settings[all]"]
+lint = ["autoflake", "bandit", "flake8 (>=4.0.0,<5.0.0)", "flake8-bandit", "flake8-black", "flake8-bugbear", "flake8-isort", "mypy", "typed-settings[all]", "types-toml"]
+option-groups = ["click (>=7,<9)", "click-option-group"]
+test = ["coverage[toml] (>=5.3)", "pytest (>=7.2.0)", "pytest-cov", "typed-settings[all]", "typing-extensions"]
 
 [[package]]
 name = "typing-extensions"
@@ -837,4 +924,4 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "1b6433c109902803a54c0b3c45e2a7f90b28856225f60da5375e12102f7ad069"
+content-hash = "cd6caa22ea5177244b1aac6ecace4cd75f540f9750a35bbedb67d0129f457c41"
