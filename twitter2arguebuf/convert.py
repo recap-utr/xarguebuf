@@ -30,7 +30,7 @@ class TweetConfig:
         bool,
         ts.option(
             default=False,
-            click={"param_decls": ("--raw-text", "flag"), "is_flag": True},
+            click={"param_decls": "--tweet-raw-text", "is_flag": True},
             help="By default, the texts of the tweets will be cleaned (e.g., resolve links and hide the initial user mention). Set to `no-clean` to disable.",
         ),
     )
@@ -88,7 +88,7 @@ class GraphConfig:
         bool,
         ts.option(
             default=False,
-            click={"param_decls": ("--graph-render", "flag"), "is_flag": True},
+            click={"param_decls": "--graph-render", "is_flag": True},
             help="If set, the graphs will be rendered and stored as PDF files besides the source. Note: Only works in Docker or if graphviz is installed on your system.",
         ),
     )
