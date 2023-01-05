@@ -436,7 +436,7 @@ def convert(
                 if config.graph.render:
                     try:
                         arguebuf.render(
-                            arguebuf.to_gv(g), output_path.with_suffix(".svg")
+                            arguebuf.to_gv(g), output_path.with_suffix(".pdf")
                         )
                     except Exception as e:
                         print(f"Error when trying to render {output_path}:\n{e}")
