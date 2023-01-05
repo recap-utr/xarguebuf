@@ -4,6 +4,7 @@ import sys
 import typing as t
 from collections import defaultdict
 from pathlib import Path
+from shutil import rmtree
 
 import arguebuf
 import attrs
@@ -404,6 +405,9 @@ def convert(
         if entailment_address
         else None
     )
+
+    if output_folder.is_dir():
+        rmtree(output_folder)
 
     output_folder.mkdir(parents=True, exist_ok=True)
     with (output_folder / "config.json").open("w") as fp:
