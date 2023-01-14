@@ -27,99 +27,66 @@ URL_PATTERN = re.compile(r"https?:\/\/t.co\/\w+")
 
 @ts.settings(frozen=True)
 class TweetConfig:
-    raw_text: bool = t.cast(
-        bool,
-        ts.option(
-            default=False,
-            click={"param_decls": "--tweet-raw-text", "is_flag": True},
-            help="By default, the texts of the tweets will be cleaned (e.g., resolve links and hide the initial user mention). Set to `no-clean` to disable.",
-        ),
+    raw_text: bool = ts.option(
+        default=False,
+        click={"param_decls": "--tweet-raw-text", "is_flag": True},
+        help="By default, the texts of the tweets will be cleaned (e.g., resolve links and hide the initial user mention). Set to `no-clean` to disable.",
     )
-    min_chars: int = t.cast(
-        int,
-        ts.option(
-            default=0,
-            help="Number of characters a tweet should have to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
-        ),
+    min_chars: int = ts.option(
+        default=0,
+        help="Number of characters a tweet should have to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
     )
-    max_chars: int = t.cast(
-        int,
-        ts.option(
-            default=sys.maxsize,
-            help="Number of characters a tweet should have at most to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
-        ),
+    max_chars: int = ts.option(
+        default=sys.maxsize,
+        help="Number of characters a tweet should have at most to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
     )
-    min_interactions: int = t.cast(
-        int,
-        ts.option(
-            default=0,
-            help="Number of interactions (likes + replies + quotes + retweets) a tweet should have to be included in the graph. Note: If a tweet has less interactions, all replies to it will be removed as well.",
-        ),
+    min_interactions: int = ts.option(
+        default=0,
+        help="Number of interactions (likes + replies + quotes + retweets) a tweet should have to be included in the graph. Note: If a tweet has less interactions, all replies to it will be removed as well.",
     )
-    max_interactions: int = t.cast(
-        int,
-        ts.option(
-            default=sys.maxsize,
-            help="Number of interactions (likes + replies + quotes + retweets) a tweet should have at most to be included in the graph. Note: If a tweet has more interactions, all replies to it will be removed as well.",
-        ),
+    max_interactions: int = ts.option(
+        default=sys.maxsize,
+        help="Number of interactions (likes + replies + quotes + retweets) a tweet should have at most to be included in the graph. Note: If a tweet has more interactions, all replies to it will be removed as well.",
     )
-    userdata: t.List[str] = t.cast(
-        t.List[str],
-        ts.option(
-            factory=lambda: [
-                "public_metrics",
-                "context_annotations",
-                "entities",
-                "possibly_sentitive",
-                "attachments",
-                "geo",
-                "source",
-            ],
-            help="Additional fields of the `tweet` api response that shall be stored as `userdata` in the arguebuf file (if returned by Twitter).",
-        ),
+    userdata: t.List[str] = ts.option(
+        factory=lambda: [
+            "public_metrics",
+            "context_annotations",
+            "entities",
+            "possibly_sentitive",
+            "attachments",
+            "geo",
+            "source",
+        ],
+        help="Additional fields of the `tweet` api response that shall be stored as `userdata` in the arguebuf file (if returned by Twitter).",
     )
-    language: str = t.cast(
-        str, ts.option(default="en", help="Only include tweets with matching language")
+    language: str = ts.option(
+        default="en", help="Only include tweets with matching language"
     )
 
 
 @ts.settings(frozen=True)
 class GraphConfig:
-    render: bool = t.cast(
-        bool,
-        ts.option(
-            default=False,
-            click={"param_decls": "--graph-render", "is_flag": True},
-            help="If set, the graphs will be rendered and stored as PDF files besides the source. Note: Only works in Docker or if graphviz is installed on your system.",
-        ),
+    render: bool = ts.option(
+        default=False,
+        click={"param_decls": "--graph-render", "is_flag": True},
+        help="If set, the graphs will be rendered and stored as PDF files besides the source. Note: Only works in Docker or if graphviz is installed on your system.",
     )
-    min_depth: int = t.cast(
-        int,
-        ts.option(
-            default=0,
-            help="Minimum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with fewer tweets are removed from the graph.",
-        ),
+    min_depth: int = ts.option(
+        default=0,
+        help="Minimum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with fewer tweets are removed from the graph.",
     )
-    max_depth: int = t.cast(
-        int,
-        ts.option(
-            default=sys.maxsize,
-            help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
-        ),
+    max_depth: int = ts.option(
+        default=sys.maxsize,
+        help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
     )
-    min_nodes: int = t.cast(
-        int,
-        ts.option(
-            default=1,
-            help="Minimum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has fewer nodes, the graph is not stored.",
-        ),
+    min_nodes: int = ts.option(
+        default=1,
+        help="Minimum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has fewer nodes, the graph is not stored.",
     )
-    max_nodes: int = t.cast(
-        int,
-        ts.option(
-            default=sys.maxsize,
-            help="Maximum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has more nodes, the graph is not stored.",
-        ),
+    max_nodes: int = ts.option(
+        default=sys.maxsize,
+        help="Maximum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has more nodes, the graph is not stored.",
     )
 
 
@@ -345,7 +312,7 @@ def parse_graph(
         )
 
         if not (min_depth_valid and max_depth_valid):
-            nodes_to_remove = {leaf}
+            nodes_to_remove: set[arguebuf.Node] = {leaf}
 
             while nodes_to_remove:
                 node_to_remove = nodes_to_remove.pop()
