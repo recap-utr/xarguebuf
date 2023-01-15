@@ -161,6 +161,27 @@ def process_tweet(text: _GenericString, raw_text: bool) -> _GenericString:
     return text
 
 
+def build_atom(
+    tweet: model.Tweet,
+    text: str,
+    participants: t.Mapping[str, arguebuf.Participant],
+    config: TweetConfig,
+):
+    return arguebuf.AtomNode(
+        id=tweet["id"],
+        text=text,
+        resource=arguebuf.Reference(text=text),
+        metadata=arguebuf.Metadata(
+            created=parse_timestamp(tweet.get("created_at")),
+            updated=pendulum.now(),
+        ),
+        userdata={key: tweet[key] for key in config.userdata if key in tweet},
+        participant=participants[tweet["author_id"]]
+        if tweet.get("author_id")
+        else None,
+    )
+
+
 def build_subtree(
     level: int,
     g: arguebuf.Graph,
@@ -177,21 +198,7 @@ def build_subtree(
             and len(text) <= config.tweet.max_chars
             and tweet["lang"] == config.tweet.language
         ):
-            atom = arguebuf.AtomNode(
-                id=tweet["id"],
-                text=text,
-                resource=arguebuf.Reference(text=text),
-                metadata=arguebuf.Metadata(
-                    created=parse_timestamp(tweet.get("created_at")),
-                    updated=pendulum.now(),
-                ),
-                userdata={
-                    key: tweet[key] for key in config.tweet.userdata if key in tweet
-                },
-                participant=participants[tweet["author_id"]]
-                if tweet.get("author_id")
-                else None,
-            )
+            atom = build_atom(tweet, text, participants, config.tweet)
             scheme_type = None
 
             if client:
@@ -281,18 +288,9 @@ def parse_graph(
     config: Config,
 ) -> arguebuf.Graph:
     g = arguebuf.Graph()
-    assert mc_tweet.get("id")
+    mc_text: str = process_tweet(mc_tweet["text"], config.tweet.raw_text)
 
-    mc = arguebuf.AtomNode(
-        process_tweet(mc_tweet["text"], config.tweet.raw_text),
-        metadata=arguebuf.Metadata(
-            created=parse_timestamp(mc_tweet.get("created_at")), updated=pendulum.now()
-        ),
-        participant=participants[mc_tweet["author_id"]]
-        if mc_tweet.get("author_id")
-        else None,
-        id=mc_tweet["id"],
-    )
+    mc = build_atom(mc_tweet, mc_text, participants, config.tweet)
     g.add_node(mc)
     g.major_claim = mc
     build_subtree(
