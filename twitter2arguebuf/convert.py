@@ -142,15 +142,21 @@ def parse_timestamp(value: t.Optional[str]) -> t.Optional[DateTime]:
     return None
 
 
-def process_tweet(text: t.Optional[str], raw_text: bool) -> t.Optional[str]:
-    if text and not raw_text:
-        text = URL_PATTERN.sub("", text)
-        text = text.strip()
+_GenericString = t.TypeVar("_GenericString", str, None)
 
-        while HANDLE_PATTERN.search(text):
-            text = HANDLE_PATTERN.sub("", text).strip()
 
-        text = text.replace("  ", " ")
+def process_tweet(text: _GenericString, raw_text: bool) -> _GenericString:
+    if text is not None and not raw_text:
+        _text = text
+        _text = URL_PATTERN.sub("", _text)
+        _text = _text.strip()
+
+        while HANDLE_PATTERN.search(_text):
+            _text = HANDLE_PATTERN.sub("", _text).strip()
+
+        _text = _text.replace("  ", " ")
+
+        return _text
 
     return text
 
