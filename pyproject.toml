@@ -8,6 +8,9 @@ readme = "README.md"
 homepage = "http://recap.uni-trier.de"
 repository = "https://github.com/recap-utr/twitter2arguebuf"
 
+[tool.poetry.scripts]
+twitter2arguebuf = "twitter2arguebuf.app:app"
+
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
 arguebuf = { version = "^2.0.0b7", extras = [
