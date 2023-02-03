@@ -16,15 +16,15 @@ docker build --tag twitter2arguebuf .
 ### Running the Image
 
 To read and write data, you have to bind a folder (e.g., `./data`) to the container.
-The command to run can be specified using the environment variable `cmd`.
+The command to run can simply be appended to the invocation.
 Thus, run it as follows:
 
 ```sh
-docker run --rm -it -v $(pwd)/data:/app/data -e cmd="COMMAND_TO_RUN" twitter2arguebuf
+docker run --rm -it -v $(pwd)/data:/app/data twitter2arguebuf $CMD
 ```
 
-To get an overview of the options, set `cmd="convert --help"`.
-As a start, you may want to try the following: `cmd="convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50"`.
+To get an overview of the options, run `twitter2arguebuf convert --help`.
+As a start, you may want to try the following: `twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50`.
 _Please note:_ Graphs having more than 1000 nodes will not be rendered as this takes way too much time.
 
 ## Counting Tweets
