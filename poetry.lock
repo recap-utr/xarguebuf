@@ -950,14 +950,14 @@ tqdm = ">=4.62"
 
 [[package]]
 name = "typed-settings"
-version = "2.0.1"
+version = "2.0.2"
 description = "Typed settings based on attrs classes"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typed_settings-2.0.1-py3-none-any.whl", hash = "sha256:8d0471f51e05bfd05d10aae2f84136320114119e4682aa218b4cad9235389f91"},
-    {file = "typed_settings-2.0.1.tar.gz", hash = "sha256:8dfc14f1ef71422dc2a729ddb4523e32c6aa3703e94d10c86d1022b1bc5aade9"},
+    {file = "typed_settings-2.0.2-py3-none-any.whl", hash = "sha256:773cd3ae905db465983e422df0d74a39327c4288d957a0eea7391c127bd6c1fb"},
+    {file = "typed_settings-2.0.2.tar.gz", hash = "sha256:0181c0d71152d20f7d725a06223be2f25a0a4bf43f02d7b22e22c7f2b7fed8da"},
 ]
 
 [package.dependencies]
