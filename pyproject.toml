@@ -13,7 +13,7 @@ twitter2arguebuf = "twitter2arguebuf.app:app"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
-arguebuf = { version = "^2.0.0b7", extras = [
+arguebuf = { version = "^2.0.0-beta.7", extras = [
     "graphviz",
 ], allow-prereleases = true }
 python-dotenv = "^1.0.0"
