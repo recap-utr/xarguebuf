@@ -21,7 +21,7 @@ pendulum = "^2.1.2"
 twarc = "^2.13.0"
 arg-services = "^1.0.4"
 rich-click = "^1.6.0"
-typed-settings = "^2.0.1"
+typed-settings = "^23.0.0"
 
 [tool.poetry.group.dev.dependencies]
 nltk = "^3.8.1"
