@@ -3,24 +3,14 @@
 To convert the conversations to graphs, only the first section (Docker Usage) is relevant.
 Please ignore the sections afterwards (Counting Tweets and below).
 
-## Docker Usage
-
-### Building the Image
-
-This is necessary every time the source code changed (e.g., changes are pulled from GitHub).
-
-```sh
-docker build --tag twitter2arguebuf .
-```
-
-### Running the Image
+## Usage
 
 To read and write data, you have to bind a folder (e.g., `./data`) to the container.
 The command to run can simply be appended to the invocation.
 Thus, run it as follows:
 
 ```sh
-docker run --rm -it -v $(pwd)/data:/app/data twitter2arguebuf $CMD
+docker run --rm -v $(pwd)/data:/app/data twitter2arguebuf $CMD
 ```
 
 To get an overview of the options, run `twitter2arguebuf convert --help`.
@@ -31,7 +21,7 @@ _Please note:_ Graphs having more than 1000 nodes will not be rendered as this t
 
 ```sh
 QUERY="INSERT_YOUR_QUERY_HERE"
-poetry run python -m twitter2arguebuf count --start-time 2020-02-03 --end-time 2020-11-02 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en"
+twitter2arguebuf count --start-time 2020-02-03 --end-time 2020-11-02 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en"
 ```
 
 ## Downloading Tweets
@@ -39,11 +29,11 @@ poetry run python -m twitter2arguebuf count --start-time 2020-02-03 --end-time 2
 ```sh
 QUERY="INSERT_YOUR_QUERY_HERE"
 # Save all tweet ids that match your query
-poetry run python -m twarc search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" /dev/stdout | poetry run python -m twarc dehydrate - data/tweets.txt
+twitter2arguebuf api search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" /dev/stdout | twitter2arguebuf api dehydrate - data/tweets.txt
 # Download the complete archive of all conversations that above tweets are part of
-poetry run python -m twarc conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweets.txt data/conversations.jsonl
+twitter2arguebuf api conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweets.txt data/conversations.jsonl
 # Convert the saved conversations to argument graphs
-poetry run python -m twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50 --tweet-min-interactions 0 --graph-min-depth 1
+twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50 --tweet-min-interactions 0 --graph-min-depth 1
 ```
 
 ## Exemplary Queries
