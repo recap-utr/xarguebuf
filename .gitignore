@@ -196,3 +196,6 @@ cython_debug/
 data/
 annotations/*
 !annotations/*.py
+.envrc
+.direnv/
+/result
