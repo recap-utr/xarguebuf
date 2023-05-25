@@ -12,7 +12,7 @@ import grpc
 import pendulum
 import rich_click as click
 import typed_settings as ts
-from arg_services.mining.v1 import entailment_pb2, entailment_pb2_grpc
+from arg_services.mining.v1beta import entailment_pb2, entailment_pb2_grpc
 from pendulum.datetime import DateTime
 from pendulum.parser import parse as dt_parse
 from rich import print
@@ -30,23 +30,42 @@ class TweetConfig:
     raw_text: bool = ts.option(
         default=False,
         click={"param_decls": "--tweet-raw-text", "is_flag": True},
-        help="By default, the texts of the tweets will be cleaned (e.g., resolve links and hide the initial user mention). Set to `no-clean` to disable.",
+        help=(
+            "By default, the texts of the tweets will be cleaned (e.g., resolve links"
+            " and hide the initial user mention). Set to `no-clean` to disable."
+        ),
     )
     min_chars: int = ts.option(
         default=0,
-        help="Number of characters a tweet should have to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
+        help=(
+            "Number of characters a tweet should have to be included in the graph."
+            " Note: If a tweet has less characters, all replies to it will be removed"
+            " as well."
+        ),
     )
     max_chars: int = ts.option(
         default=sys.maxsize,
-        help="Number of characters a tweet should have at most to be included in the graph. Note: If a tweet has less characters, all replies to it will be removed as well.",
+        help=(
+            "Number of characters a tweet should have at most to be included in the"
+            " graph. Note: If a tweet has less characters, all replies to it will be"
+            " removed as well."
+        ),
     )
     min_interactions: int = ts.option(
         default=0,
-        help="Number of interactions (likes + replies + quotes + retweets) a tweet should have to be included in the graph. Note: If a tweet has less interactions, all replies to it will be removed as well.",
+        help=(
+            "Number of interactions (likes + replies + quotes + retweets) a tweet"
+            " should have to be included in the graph. Note: If a tweet has less"
+            " interactions, all replies to it will be removed as well."
+        ),
     )
     max_interactions: int = ts.option(
         default=sys.maxsize,
-        help="Number of interactions (likes + replies + quotes + retweets) a tweet should have at most to be included in the graph. Note: If a tweet has more interactions, all replies to it will be removed as well.",
+        help=(
+            "Number of interactions (likes + replies + quotes + retweets) a tweet"
+            " should have at most to be included in the graph. Note: If a tweet has"
+            " more interactions, all replies to it will be removed as well."
+        ),
     )
     userdata: t.List[str] = ts.option(
         factory=lambda: [
@@ -58,7 +77,10 @@ class TweetConfig:
             "geo",
             "source",
         ],
-        help="Additional fields of the `tweet` api response that shall be stored as `userdata` in the arguebuf file (if returned by Twitter).",
+        help=(
+            "Additional fields of the `tweet` api response that shall be stored as"
+            " `userdata` in the arguebuf file (if returned by Twitter)."
+        ),
     )
     language: str = ts.option(
         default="en", help="Only include tweets with matching language"
@@ -70,23 +92,43 @@ class GraphConfig:
     render: bool = ts.option(
         default=False,
         click={"param_decls": "--graph-render", "is_flag": True},
-        help="If set, the graphs will be rendered and stored as PDF files besides the source. Note: Only works in Docker or if graphviz is installed on your system.",
+        help=(
+            "If set, the graphs will be rendered and stored as PDF files besides the"
+            " source. Note: Only works in Docker or if graphviz is installed on your"
+            " system."
+        ),
     )
     min_depth: int = ts.option(
         default=0,
-        help="Minimum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with fewer tweets are removed from the graph.",
+        help=(
+            "Minimum distance between the conversation start (i.e., the major claim) to"
+            " leaf tweet. Conversation branches with fewer tweets are removed from the"
+            " graph."
+        ),
     )
     max_depth: int = ts.option(
         default=sys.maxsize,
-        help="Maximum distance between the conversation start (i.e., the major claim) to leaf tweet. Conversation branches with more tweets are reduced to `max_depth`.",
+        help=(
+            "Maximum distance between the conversation start (i.e., the major claim) to"
+            " leaf tweet. Conversation branches with more tweets are reduced to"
+            " `max_depth`."
+        ),
     )
     min_nodes: int = ts.option(
         default=1,
-        help="Minimum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has fewer nodes, the graph is not stored.",
+        help=(
+            "Minimum number of nodes the graph should have after converting all tweets"
+            " to nodes (including the major claim). If it has fewer nodes, the graph is"
+            " not stored."
+        ),
     )
     max_nodes: int = ts.option(
         default=sys.maxsize,
-        help="Maximum number of nodes the graph should have after converting all tweets to nodes (including the major claim). If it has more nodes, the graph is not stored.",
+        help=(
+            "Maximum number of nodes the graph should have after converting all tweets"
+            " to nodes (including the major claim). If it has more nodes, the graph is"
+            " not stored."
+        ),
     )
 
 
@@ -170,15 +212,15 @@ def build_atom(
     return arguebuf.AtomNode(
         id=tweet["id"],
         text=text,
-        resource=arguebuf.Reference(text=text),
+        reference=arguebuf.Reference(text=text),
         metadata=arguebuf.Metadata(
             created=parse_timestamp(tweet.get("created_at")),
             updated=pendulum.now(),
         ),
         userdata={key: tweet[key] for key in config.userdata if key in tweet},
-        participant=participants[tweet["author_id"]]
-        if tweet.get("author_id")
-        else None,
+        participant=(
+            participants[tweet["author_id"]] if tweet.get("author_id") else None
+        ),
     )
 
 
@@ -306,17 +348,21 @@ def parse_graph(
     # Remove nodes that do not match the depth criterions
     for leaf in g.leaf_nodes:
         min_depth_valid = (
-            g.node_distance(leaf, mc, config.graph.min_depth, ignore_schemes=True)
+            arguebuf.traverse.node_distance(
+                leaf, mc, g.incoming_atom_nodes, config.graph.min_depth
+            )
             is None
         )
         max_depth_valid = (
             config.graph.max_depth is sys.maxsize
-            or g.node_distance(leaf, mc, config.graph.max_depth, ignore_schemes=True)
+            or arguebuf.traverse.node_distance(
+                leaf, mc, g.incoming_atom_nodes, config.graph.max_depth
+            )
             is not None
         )
 
         if not (min_depth_valid and max_depth_valid):
-            nodes_to_remove: set[arguebuf.Node] = {leaf}
+            nodes_to_remove: set[arguebuf.AbstractNode] = {leaf}
 
             while nodes_to_remove:
                 node_to_remove = nodes_to_remove.pop()
@@ -395,7 +441,7 @@ def convert(
     referenced_tweets = parse_referenced_tweets(tweets)
     participants = parse_participants(users)
 
-    for conversation_id in track(conversation_ids, description=f"Converting tweets..."):
+    for conversation_id in track(conversation_ids, description="Converting tweets..."):
         if mc_tweet := tweets.get(conversation_id):
             g = parse_graph(mc_tweet, referenced_tweets, participants, client, config)
 
@@ -406,12 +452,12 @@ def convert(
                 output_path = conversation_path(output_folder, g.major_claim)
                 output_path.parent.mkdir(exist_ok=True)
 
-                g.to_file(output_path.with_suffix(".json"))
+                arguebuf.dump.file(g, output_path.with_suffix(".json"))
 
                 if config.graph.render:
                     try:
-                        arguebuf.render(
-                            arguebuf.to_gv(g), output_path.with_suffix(".pdf")
+                        arguebuf.render.graphviz(
+                            arguebuf.dump.graphviz(g), output_path.with_suffix(".pdf")
                         )
                     except Exception as e:
                         print(f"Error when trying to render {output_path}:\n{e}")
