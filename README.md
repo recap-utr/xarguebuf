@@ -10,7 +10,7 @@ The command to run can simply be appended to the invocation.
 Thus, run it as follows:
 
 ```sh
-docker run --rm -v $(pwd)/data:/app/data twitter2arguebuf $CMD
+docker run -it --rm -v $(pwd)/data:/app/data twitter2arguebuf $CMD
 ```
 
 To get an overview of the options, run `twitter2arguebuf convert --help`.
