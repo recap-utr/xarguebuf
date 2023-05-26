@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
     flake-parts.url = "github:hercules-ci/flake-parts";
     poetry2nix = {
       url = "github:nix-community/poetry2nix";
@@ -12,7 +12,6 @@
       systems = nixpkgs.lib.systems.flakeExposed;
       perSystem = { pkgs, system, lib, self', ... }:
         let
-          inherit (poetry2nix.legacyPackages.${system}) mkPoetryApplication;
           python = pkgs.python311;
           poetry = pkgs.poetry;
         in
@@ -29,10 +28,31 @@
           };
           packages =
             let
+              inherit (poetry2nix.legacyPackages.${system}) mkPoetryApplication overrides;
               app = mkPoetryApplication {
                 inherit python;
                 projectDir = ./.;
                 preferWheels = true;
+                # overrides = overrides.withDefaults (self: super: {
+                #   twarc = super.twarc.overridePythonAttrs (old: {
+                #     propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ super.setuptools ];
+                #   });
+                #   click-config-file = super.click-config-file.overridePythonAttrs (old: {
+                #     propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ super.setuptools ];
+                #   });
+                #   rich-click = super.rich-click.overridePythonAttrs (old: {
+                #     propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ super.setuptools ];
+                #   });
+                #   typed-settings = super.typed-settings.overridePythonAttrs (old: {
+                #     propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ super.hatchling ];
+                #   });
+                #   grpc-stubs = super.grpc-stubs.overridePythonAttrs (old: {
+                #     propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ super.setuptools ];
+                #   });
+                #   arg-services = super.arg-services.overridePythonAttrs (old: {
+                #     propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ super.poetry ];
+                #   });
+                # });
               };
             in
             {
@@ -40,6 +60,8 @@
               default = app;
               dockerImage = pkgs.dockerTools.buildImage {
                 name = "twitter2arguebuf";
+                tag = "latest";
+                created = "now";
                 config = {
                   entrypoint = [ (lib.getExe app) ];
                   cmd = [ "--help" ];
