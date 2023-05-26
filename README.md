@@ -5,6 +5,13 @@ Please ignore the sections afterwards (Counting Tweets and below).
 
 ## Usage
 
+The app is currently supplied as a pre-built Docker image.
+Execute the following to install the image:
+
+```sh
+docker load -i dockerImage.tar.gz
+```
+
 To read and write data, you have to bind a folder (e.g., `./data`) to the container.
 The command to run can simply be appended to the invocation.
 Thus, run it as follows:
