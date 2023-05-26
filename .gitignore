@@ -199,3 +199,5 @@ annotations/*
 .envrc
 .direnv/
 /result
+*secrets.nix
+api-key.txt

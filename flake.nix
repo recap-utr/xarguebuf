@@ -74,6 +74,7 @@
               export POETRY_VIRTUALENVS_IN_PROJECT=1
               ${lib.getExe poetry} env use ${lib.getExe python}
               ${lib.getExe poetry} install --no-root
+              export BEARER_TOKEN=$(cat api-key.txt)
             '';
           };
         };
