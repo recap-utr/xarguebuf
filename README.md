@@ -27,19 +27,23 @@ _Please note:_ Graphs having more than 1000 nodes will not be rendered as this t
 ## Counting Tweets
 
 ```sh
-QUERY="INSERT_YOUR_QUERY_HERE"
 twitter2arguebuf count --start-time 2020-02-03 --end-time 2020-11-02 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en"
 ```
 
 ## Downloading Tweets
 
 ```sh
-QUERY="INSERT_YOUR_QUERY_HERE"
-# Save all tweet ids that match your query
-twitter2arguebuf api search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" /dev/stdout | twitter2arguebuf api dehydrate - data/tweets.txt
+# Save all tweets that match the query
+twitter2arguebuf api search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" data/tweets.jsonl
+# Extract their IDs
+twitter2arguebuf api dehydrate data/tweets.jsonl data/tweetids.txt
 # Download the complete archive of all conversations that above tweets are part of
-twitter2arguebuf api conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweets.txt data/conversations.jsonl
-# Convert the saved conversations to argument graphs
+twitter2arguebuf api conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweetsids.txt data/conversations.jsonl
+```
+
+## Converting Conversations to Graphs
+
+```sh
 twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50 --tweet-min-interactions 0 --graph-min-depth 1
 ```
 
