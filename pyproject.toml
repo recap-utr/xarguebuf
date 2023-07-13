@@ -13,7 +13,7 @@ twitter2arguebuf = "twitter2arguebuf.app:app"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-arguebuf = { version = "^2.0.0b23", allow-prereleases = true, extras = [
+arguebuf = { version = "^2.0.0-beta.23", allow-prereleases = true, extras = [
     "graphviz",
 ] }
 pendulum = "^2.1.2"
