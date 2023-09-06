@@ -12,13 +12,13 @@ import grpc
 import pendulum
 import rich_click as click
 import typed_settings as ts
-from arg_services.mining.v1beta import entailment_pb2, entailment_pb2_grpc
+from arg_services.mining.v1beta import adu_pb2, entailment_pb2, entailment_pb2_grpc
 from pendulum.datetime import DateTime
 from pendulum.parser import parse as dt_parse
 from rich import print
 from rich.progress import track
 
-from twitter2arguebuf import model
+from . import model
 
 HANDLE_PATTERN = re.compile(r"^@\w+")
 URL_PATTERN = re.compile(r"https?:\/\/t.co\/\w+")
@@ -244,19 +244,27 @@ def build_subtree(
             scheme_type = None
 
             if client:
-                res: entailment_pb2.EntailmentResponse = client.Entailment(
-                    entailment_pb2.EntailmentRequest(
+                res: entailment_pb2.EntailmentsResponse = client.Entailments(
+                    entailment_pb2.EntailmentsRequest(
                         language=config.tweet.language,
-                        premise=atom.plain_text,
-                        claim=parent.plain_text,
+                        adus={
+                            atom.id: adu_pb2.Segment(text=atom.plain_text),
+                            parent.id: adu_pb2.Segment(text=parent.plain_text),
+                        },
+                        query=[
+                            entailment_pb2.EntailmentQuery(
+                                premise_id=atom.id, claim_id=parent.id
+                            )
+                        ],
                     )
                 )
 
-                if res.entailment_type == entailment_pb2.ENTAILMENT_TYPE_ENTAILMENT:
+                if res.entailments[0].type == entailment_pb2.ENTAILMENT_TYPE_ENTAILMENT:
                     scheme_type = arguebuf.Support.DEFAULT
 
                 elif (
-                    res.entailment_type == entailment_pb2.ENTAILMENT_TYPE_CONTRADICTION
+                    res.entailments[0].type
+                    == entailment_pb2.ENTAILMENT_TYPE_CONTRADICTION
                 ):
                     scheme_type = arguebuf.Attack.DEFAULT
 
@@ -407,7 +415,7 @@ def cli():
     # help="Path to a folder where the processed graphs should be stored.",
 )
 @click.option("--entailment-address", hidden=True, default=None)
-@ts.click_options(Config, "twitter2arguebuf.convert")
+@ts.click_options(Config, "xarguebuf.convert")
 def convert(
     config: Config,
     input_file: Path,

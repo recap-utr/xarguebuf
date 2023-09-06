@@ -33,9 +33,9 @@
             projectDir = ./.;
             preferWheels = true;
           };
-          twitter2arguebuf = self'.packages.default;
+          xarguebuf = self'.packages.default;
           dockerImage = pkgs.dockerTools.buildLayeredImage {
-            name = "twitter2arguebuf";
+            name = "xarguebuf";
             tag = "latest";
             created = "now";
             config = {

@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "twitter2arguebuf"
+name = "xarguebuf"
 version = "1.0.0"
-description = "Microservice for creating argument graphs from Twitter discussions"
+description = "Microservice for creating argument graphs from X/Twitter discussions"
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 license = "MIT"
 readme = "README.md"
 homepage = "http://recap.uni-trier.de"
-repository = "https://github.com/recap-utr/twitter2arguebuf"
+repository = "https://github.com/recap-utr/xarguebuf"
 
 [tool.poetry.scripts]
-twitter2arguebuf = "twitter2arguebuf.app:app"
+xarguebuf = "xarguebuf.app:app"
 
 [tool.poetry.dependencies]
 python = "^3.10"

@@ -1,4 +1,4 @@
-# Twitter2Arguebuf
+# xarguebuf
 
 To convert the conversations to graphs, only the first section (Docker Usage) is relevant.
 Please ignore the sections afterwards (Counting Tweets and below).
@@ -17,34 +17,34 @@ The command to run can simply be appended to the invocation.
 Thus, run it as follows:
 
 ```sh
-docker run -it --rm -v $(pwd)/data:/app/data twitter2arguebuf $CMD
+docker run -it --rm -v $(pwd)/data:/app/data xarguebuf $CMD
 ```
 
-To get an overview of the options, run `twitter2arguebuf convert --help`.
-As a start, you may want to try the following: `twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50`.
+To get an overview of the options, run `xarguebuf convert --help`.
+As a start, you may want to try the following: `xarguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50`.
 _Please note:_ Graphs having more than 1000 nodes will not be rendered as this takes way too much time.
 
 ## Counting Tweets
 
 ```sh
-twitter2arguebuf count --start-time 2020-02-03 --end-time 2020-11-02 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en"
+xarguebuf count --start-time 2020-02-03 --end-time 2020-11-02 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en"
 ```
 
 ## Downloading Tweets
 
 ```sh
 # Save all tweets that match the query
-twitter2arguebuf api search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" data/tweets.jsonl
+xarguebuf api search --archive --sort-order relevancy --start-time 2020-02-03 --end-time 2020-11-02 --minimal-fields --limit 500 --max-results 100 "($QUERY) -is:retweet -is:reply -is:quote is:verified lang:en" data/tweets.jsonl
 # Extract their IDs
-twitter2arguebuf api dehydrate data/tweets.jsonl data/tweetids.txt
+xarguebuf api dehydrate data/tweets.jsonl data/tweetids.txt
 # Download the complete archive of all conversations that above tweets are part of
-twitter2arguebuf api conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweetsids.txt data/conversations.jsonl
+xarguebuf api conversations --archive --start-time 2020-02-03 --end-time 2020-11-02 data/tweetsids.txt data/conversations.jsonl
 ```
 
 ## Converting Conversations to Graphs
 
 ```sh
-twitter2arguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50 --tweet-min-interactions 0 --graph-min-depth 1
+xarguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50 --tweet-min-interactions 0 --graph-min-depth 1
 ```
 
 ## Exemplary Queries
