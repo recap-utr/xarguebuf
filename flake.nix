@@ -3,16 +3,11 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     systems.url = "github:nix-systems/default";
-    poetry2nix = {
-      url = "github:nix-community/poetry2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
   outputs = inputs @ {
     nixpkgs,
     flake-parts,
     systems,
-    poetry2nix,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -24,18 +19,19 @@
         self',
         ...
       }: let
-        python = pkgs.python311;
+        python = pkgs.python310;
         poetry = pkgs.poetry;
+        pkgName = "xarguebuf";
       in {
         packages = {
-          default = poetry2nix.legacyPackages.${system}.mkPoetryApplication {
+          default = pkgs.poetry2nix.mkPoetryApplication {
             inherit python;
             projectDir = ./.;
             preferWheels = true;
           };
-          xarguebuf = self'.packages.default;
+          ${pkgName} = self'.packages.default;
           dockerImage = pkgs.dockerTools.buildLayeredImage {
-            name = "xarguebuf";
+            name = pkgName;
             tag = "latest";
             created = "now";
             config = {
