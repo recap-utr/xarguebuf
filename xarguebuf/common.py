@@ -97,7 +97,7 @@ def prepare_output(
     if folder.is_dir():
         rmtree(folder)
 
-    folder.parent.mkdir(parents=True, exist_ok=True)
+    folder.mkdir(parents=True, exist_ok=True)
     config_dict = attrs.asdict(config)
 
     for attr in ignored_attrs or []:
@@ -125,7 +125,7 @@ def serialize(
         p = p / user_id / graph_id
 
     p = p / graph_id
-    p.mkdir(parents=True)
+    p.parent.mkdir(parents=True)
 
     arguebuf.dump.file(g, p.with_suffix(".json"))
 
