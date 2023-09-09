@@ -152,7 +152,7 @@ class EndpointConfig:
             )
         },
     )
-    limit: int = ts.option(
+    max_stories: int = ts.option(
         default=sys.maxsize,
     )
 
@@ -201,7 +201,7 @@ async def hn(config: Config, ids: tuple[int, ...]):
     ) as http_client:
         if config.endpoint.name is not None:
             res = await http_client.get(f"{config.endpoint.name}.json")
-            endpoint_ids: list[int] = res.json()[: config.endpoint.limit]
+            endpoint_ids: list[int] = res.json()[: config.endpoint.max_stories]
             all_ids.extend(endpoint_ids)
 
         for id in all_ids:
