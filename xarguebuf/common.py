@@ -7,6 +7,7 @@ from shutil import rmtree
 import arguebuf
 import attrs
 import typed_settings as ts
+from arg_services.mining.v1beta import adu_pb2, entailment_pb2, entailment_pb2_grpc
 
 
 @ts.settings(frozen=True)
@@ -134,3 +135,35 @@ def serialize(
             arguebuf.render.graphviz(arguebuf.dump.graphviz(g), p.with_suffix(".pdf"))
         except Exception as e:
             print(f"Error when trying to render {p}:\n{e}")
+
+
+def predict_schemes(
+    g: arguebuf.Graph,
+    language: str = "en",
+    client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub] = None,
+) -> arguebuf.Graph:
+    if client:
+        res: entailment_pb2.EntailmentsResponse = client.Entailments(
+            entailment_pb2.EntailmentsRequest(
+                language=language,
+                adus={
+                    node.id: adu_pb2.Segment(text=node.plain_text)
+                    for node in g.atom_nodes.values()
+                },
+                query=[
+                    entailment_pb2.EntailmentQuery(
+                        premise_id=next(iter(g.incoming_nodes(scheme))).id,
+                        claim_id=next(iter(g.outgoing_nodes(scheme))).id,
+                    )
+                    for scheme in g.scheme_nodes.values()
+                ],
+            )
+        )
+
+        for scheme_node, entailment in zip(g.scheme_nodes.values(), res.entailments):
+            if entailment.type == entailment_pb2.ENTAILMENT_TYPE_ENTAILMENT:
+                scheme_node.scheme = arguebuf.Support.DEFAULT
+            elif entailment.type == entailment_pb2.ENTAILMENT_TYPE_CONTRADICTION:
+                scheme_node.scheme = arguebuf.Attack.DEFAULT
+
+    return g

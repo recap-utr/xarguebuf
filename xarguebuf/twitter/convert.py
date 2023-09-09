@@ -10,7 +10,7 @@ import grpc
 import pendulum
 import rich_click as click
 import typed_settings as ts
-from arg_services.mining.v1beta import adu_pb2, entailment_pb2, entailment_pb2_grpc
+from arg_services.mining.v1beta import entailment_pb2_grpc
 from pendulum.datetime import DateTime
 from pendulum.parser import parse as dt_parse
 from rich import print
@@ -185,7 +185,6 @@ def build_subtree(
     parent: arguebuf.AtomNode,
     tweets: t.Mapping[str, t.Collection[model.Tweet]],
     participants: t.Mapping[str, arguebuf.Participant],
-    client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
     config: Config,
 ) -> None:
     for tweet in tweets[parent.id]:
@@ -196,34 +195,7 @@ def build_subtree(
             and tweet["lang"] == config.tweet.language
         ):
             atom = build_atom(tweet, text, participants, config.tweet)
-            scheme_type = None
-
-            if client:
-                res: entailment_pb2.EntailmentsResponse = client.Entailments(
-                    entailment_pb2.EntailmentsRequest(
-                        language=config.tweet.language,
-                        adus={
-                            atom.id: adu_pb2.Segment(text=atom.plain_text),
-                            parent.id: adu_pb2.Segment(text=parent.plain_text),
-                        },
-                        query=[
-                            entailment_pb2.EntailmentQuery(
-                                premise_id=atom.id, claim_id=parent.id
-                            )
-                        ],
-                    )
-                )
-
-                if res.entailments[0].type == entailment_pb2.ENTAILMENT_TYPE_ENTAILMENT:
-                    scheme_type = arguebuf.Support.DEFAULT
-
-                elif (
-                    res.entailments[0].type
-                    == entailment_pb2.ENTAILMENT_TYPE_CONTRADICTION
-                ):
-                    scheme_type = arguebuf.Attack.DEFAULT
-
-            scheme = arguebuf.SchemeNode(scheme_type, id=f"{atom.id},{parent.id}")
+            scheme = arguebuf.SchemeNode(id=f"{atom.id},{parent.id}")
 
             if metrics := tweet.get("public_metrics"):
                 likes = metrics.get("like_count", 0)
@@ -239,9 +211,7 @@ def build_subtree(
                     g.add_edge(arguebuf.Edge(atom, scheme))
                     g.add_edge(arguebuf.Edge(scheme, parent))
 
-                    build_subtree(
-                        level + 1, g, atom, tweets, participants, client, config
-                    )
+                    build_subtree(level + 1, g, atom, tweets, participants, config)
 
 
 def parse_referenced_tweets(
@@ -289,7 +259,7 @@ def parse_graph(
     mc_tweet: model.Tweet,
     referenced_tweets: t.Mapping[str, t.Collection[model.Tweet]],
     participants: t.Mapping[str, arguebuf.Participant],
-    client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
+    entailment_client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
     config: Config,
 ) -> arguebuf.Graph:
     g = arguebuf.Graph()
@@ -302,13 +272,13 @@ def parse_graph(
         level=1,
         g=g,
         parent=mc,
-        client=client,
         tweets=referenced_tweets,
         participants=participants,
         config=config,
     )
 
     common.prune_graph(g, config.graph)
+    common.predict_schemes(g, client=entailment_client)
 
     return g
 
@@ -352,7 +322,7 @@ def convert(
     entailment_address: t.Optional[str],
 ):
     """Convert INPUT_FILE (.jsonl) to argument graphs and save them to OUTPUT_FOLDER"""
-    client = (
+    entailment_client = (
         entailment_pb2_grpc.EntailmentServiceStub(
             grpc.insecure_channel(entailment_address)
         )
@@ -372,7 +342,9 @@ def convert(
 
     for conversation_id in track(conversation_ids, description="Converting tweets..."):
         if mc_tweet := tweets.get(conversation_id):
-            g = parse_graph(mc_tweet, referenced_tweets, participants, client, config)
+            g = parse_graph(
+                mc_tweet, referenced_tweets, participants, entailment_client, config
+            )
             mc = g.major_claim
             assert mc is not None
 

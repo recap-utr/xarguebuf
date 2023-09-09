@@ -10,11 +10,13 @@ from pathlib import Path
 from typing import Literal, Optional
 
 import arguebuf
+import grpc
 import httpx
 import pendulum
 import rich
 import rich_click as click
 import typed_settings as ts
+from arg_services.mining.v1beta import entailment_pb2_grpc
 from pendulum.datetime import DateTime
 from pydantic import BaseModel
 
@@ -162,6 +164,7 @@ class Config:
     story: StoryConfig = StoryConfig()
     endpoint: EndpointConfig = EndpointConfig()
     output_folder: Path = ts.option(default=Path("data/hn"))
+    entailment_address: t.Optional[str] = ts.option(default=None)
 
 
 def coro(f):
@@ -185,6 +188,14 @@ async def hn(config: Config, ids: tuple[int, ...]):
     all_ids = list(ids)
     common.prepare_output(config.output_folder, config, ["output_folder"])
 
+    entailment_client = (
+        entailment_pb2_grpc.EntailmentServiceStub(
+            grpc.insecure_channel(config.entailment_address)
+        )
+        if config.entailment_address
+        else None
+    )
+
     async with httpx.AsyncClient(
         base_url="https://hacker-news.firebaseio.com/v0/"
     ) as http_client:
@@ -194,7 +205,7 @@ async def hn(config: Config, ids: tuple[int, ...]):
             all_ids.extend(endpoint_ids)
 
         for id in all_ids:
-            g = await build_graph(id, config, http_client)
+            g = await build_graph(id, config, http_client, entailment_client)
             mc = g.major_claim
             assert mc is not None
 
@@ -208,7 +219,10 @@ async def hn(config: Config, ids: tuple[int, ...]):
 
 
 async def build_graph(
-    id: int, config: Config, http_client: httpx.AsyncClient
+    id: int,
+    config: Config,
+    http_client: httpx.AsyncClient,
+    entailment_client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
 ) -> arguebuf.Graph:
     rich.print(f"Processing story {id}...")
     parent: int | None = id
@@ -235,6 +249,7 @@ async def build_graph(
 
     g = build_subtree(0, g, mc, comments, participants)
     g = common.prune_graph(g, config.graph)
+    g = common.predict_schemes(g, client=entailment_client)
 
     return g
 
