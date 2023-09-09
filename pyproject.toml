@@ -20,6 +20,11 @@ arg-services = "^1.4.0"
 rich-click = "^1.6.1"
 typed-settings = "^23.0.1"
 setuptools = "^68.1.2"
+httpx = "^0.24.1"
+pydantic = "^2.3.0"
+
+[tool.poetry.group.dev.dependencies]
+datamodel-code-generator = "^0.21.5"
 
 [build-system]
 requires = ["poetry-core"]

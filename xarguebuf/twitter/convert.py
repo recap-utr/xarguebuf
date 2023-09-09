@@ -4,10 +4,8 @@ import sys
 import typing as t
 from collections import defaultdict
 from pathlib import Path
-from shutil import rmtree
 
 import arguebuf
-import attrs
 import grpc
 import pendulum
 import rich_click as click
@@ -17,6 +15,8 @@ from pendulum.datetime import DateTime
 from pendulum.parser import parse as dt_parse
 from rich import print
 from rich.progress import track
+
+from xarguebuf import common
 
 from . import model
 
@@ -88,53 +88,8 @@ class TweetConfig:
 
 
 @ts.settings(frozen=True)
-class GraphConfig:
-    render: bool = ts.option(
-        default=False,
-        click={"param_decls": "--graph-render", "is_flag": True},
-        help=(
-            "If set, the graphs will be rendered and stored as PDF files besides the"
-            " source. Note: Only works in Docker or if graphviz is installed on your"
-            " system."
-        ),
-    )
-    min_depth: int = ts.option(
-        default=0,
-        help=(
-            "Minimum distance between the conversation start (i.e., the major claim) to"
-            " leaf tweet. Conversation branches with fewer tweets are removed from the"
-            " graph."
-        ),
-    )
-    max_depth: int = ts.option(
-        default=sys.maxsize,
-        help=(
-            "Maximum distance between the conversation start (i.e., the major claim) to"
-            " leaf tweet. Conversation branches with more tweets are reduced to"
-            " `max_depth`."
-        ),
-    )
-    min_nodes: int = ts.option(
-        default=1,
-        help=(
-            "Minimum number of nodes the graph should have after converting all tweets"
-            " to nodes (including the major claim). If it has fewer nodes, the graph is"
-            " not stored."
-        ),
-    )
-    max_nodes: int = ts.option(
-        default=sys.maxsize,
-        help=(
-            "Maximum number of nodes the graph should have after converting all tweets"
-            " to nodes (including the major claim). If it has more nodes, the graph is"
-            " not stored."
-        ),
-    )
-
-
-@ts.settings(frozen=True)
 class Config:
-    graph: GraphConfig = GraphConfig()
+    graph: common.GraphConfig = common.GraphConfig()
     tweet: TweetConfig = TweetConfig()
 
 
@@ -184,21 +139,21 @@ def parse_timestamp(value: t.Optional[str]) -> t.Optional[DateTime]:
     return None
 
 
-_GenericString = t.TypeVar("_GenericString", str, None)
+OptionalString = t.TypeVar("OptionalString", str, None)
 
 
-def process_tweet(text: _GenericString, raw_text: bool) -> _GenericString:
+def process_tweet(text: OptionalString, raw_text: bool) -> OptionalString:
     if text is not None and not raw_text:
-        _text = text
-        _text = URL_PATTERN.sub("", _text)
-        _text = _text.strip()
+        out: str = text
+        out = URL_PATTERN.sub("", out)
+        out = out.strip()
 
-        while HANDLE_PATTERN.search(_text):
-            _text = HANDLE_PATTERN.sub("", _text).strip()
+        while HANDLE_PATTERN.search(out):
+            out = HANDLE_PATTERN.sub("", out).strip()
 
-        _text = _text.replace("  ", " ")
+        out = out.replace("  ", " ")
 
-        return _text
+        return out
 
     return text
 
@@ -353,33 +308,7 @@ def parse_graph(
         config=config,
     )
 
-    # Remove nodes that do not match the depth criterions
-    for leaf in g.leaf_nodes:
-        min_depth_valid = (
-            arguebuf.traverse.node_distance(
-                leaf, mc, g.incoming_atom_nodes, config.graph.min_depth
-            )
-            is None
-        )
-        max_depth_valid = (
-            config.graph.max_depth is sys.maxsize
-            or arguebuf.traverse.node_distance(
-                leaf, mc, g.incoming_atom_nodes, config.graph.max_depth
-            )
-            is not None
-        )
-
-        if not (min_depth_valid and max_depth_valid):
-            nodes_to_remove: set[arguebuf.AbstractNode] = {leaf}
-
-            while nodes_to_remove:
-                node_to_remove = nodes_to_remove.pop()
-                nodes_to_remove.update(g.outgoing_nodes(node_to_remove))
-
-                if len(g.incoming_nodes(node_to_remove)) == 0:
-                    g.remove_node(node_to_remove)
-
-    g.clean_participants()
+    common.prune_graph(g, config.graph)
 
     return g
 
@@ -431,15 +360,7 @@ def convert(
         else None
     )
 
-    if output_folder.is_dir():
-        rmtree(output_folder)
-
-    output_folder.mkdir(parents=True, exist_ok=True)
-    with (output_folder / "config.json").open("w") as fp:
-        json.dump(
-            attrs.asdict(config),
-            fp,
-        )
+    common.prepare_output(output_folder, config)
 
     print(f"Processing '{input_file}'")
 
@@ -452,20 +373,13 @@ def convert(
     for conversation_id in track(conversation_ids, description="Converting tweets..."):
         if mc_tweet := tweets.get(conversation_id):
             g = parse_graph(mc_tweet, referenced_tweets, participants, client, config)
+            mc = g.major_claim
+            assert mc is not None
 
-            if (
-                len(g.atom_nodes) >= config.graph.min_nodes
-                and len(g.atom_nodes) <= config.graph.max_nodes
-            ):
-                output_path = conversation_path(output_folder, g.major_claim)
-                output_path.parent.mkdir(exist_ok=True)
-
-                arguebuf.dump.file(g, output_path.with_suffix(".json"))
-
-                if config.graph.render:
-                    try:
-                        arguebuf.render.graphviz(
-                            arguebuf.dump.graphviz(g), output_path.with_suffix(".pdf")
-                        )
-                    except Exception as e:
-                        print(f"Error when trying to render {output_path}:\n{e}")
+            common.serialize(
+                g,
+                output_folder,
+                config.graph,
+                mc.id,
+                mc.participant.id if mc.participant else None,
+            )

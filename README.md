@@ -1,4 +1,4 @@
-# xarguebuf
+# xArguebuf
 
 To convert the conversations to graphs, only the first section (Docker Usage) is relevant.
 Please ignore the sections afterwards (Counting Tweets and below).

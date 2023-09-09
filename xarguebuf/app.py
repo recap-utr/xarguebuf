@@ -1,8 +1,8 @@
 import rich_click as click
 
-from . import api, convert, count
+from . import hn, twitter
 
-app = click.CommandCollection(sources=[convert.cli, count.cli, api.cli])
+cli = click.Group(name="xarguebuf", commands=[hn.cli, twitter.cli])
 
 if __name__ == "__main__":
-    app()
+    cli()
