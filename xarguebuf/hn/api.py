@@ -206,16 +206,18 @@ async def hn(config: Config, ids: tuple[int, ...]):
 
         for id in all_ids:
             g = await build_graph(id, config, http_client, entailment_client)
-            mc = g.major_claim
-            assert mc is not None
 
-            common.serialize(
-                g,
-                config.output_folder,
-                config.graph,
-                mc.id,
-                mc.participant.id if mc.participant else None,
-            )
+            if g is not None:
+                mc = g.major_claim
+                assert mc is not None
+
+                common.serialize(
+                    g,
+                    config.output_folder,
+                    config.graph,
+                    mc.id,
+                    mc.participant.id if mc.participant else None,
+                )
 
 
 async def build_graph(
@@ -223,7 +225,7 @@ async def build_graph(
     config: Config,
     http_client: httpx.AsyncClient,
     entailment_client: t.Optional[entailment_pb2_grpc.EntailmentServiceStub],
-) -> arguebuf.Graph:
+) -> arguebuf.Graph | None:
     rich.print(f"Processing story {id}...")
     parent: int | None = id
     item: RawItem | None = None
@@ -238,7 +240,10 @@ async def build_graph(
     story = item.parse()
     assert isinstance(story, Story)
 
-    comments = await fetch_comments(story, http_client)
+    if story.score < config.story.min_score or story.score > config.story.max_score:
+        return None
+
+    comments = await fetch_comments(story, config, http_client)
     comments_chain = itertools.chain.from_iterable(comments.values())
     participants = await build_participants([story, *comments_chain], http_client)
 
@@ -327,7 +332,7 @@ async def build_participants(
 
 
 async def fetch_comments(
-    story: Story, http_client: httpx.AsyncClient
+    story: Story, config: Config, http_client: httpx.AsyncClient
 ) -> dict[str, list[Comment]]:
     queue: list[int] = []
 
@@ -342,7 +347,11 @@ async def fetch_comments(
         item = RawItem(**res.json())
         comment = item.parse()
 
-        if isinstance(comment, Comment):
+        if (
+            isinstance(comment, Comment)
+            and len(comment.text) >= config.comment.min_chars
+            and len(comment.text) <= config.comment.max_chars
+        ):
             comments[str(comment.parent)].append(comment)
 
             if comment.kids is not None:
