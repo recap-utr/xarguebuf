@@ -24,7 +24,7 @@ httpx = "^0.24.1"
 pydantic = "^2.4.2"
 
 [tool.poetry.group.dev.dependencies]
-datamodel-code-generator = "^0.21.5"
+datamodel-code-generator = "^0.22.0"
 
 [build-system]
 requires = ["poetry-core"]
