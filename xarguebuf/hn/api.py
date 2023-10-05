@@ -329,7 +329,7 @@ async def build_participants(
             participants[user.id] = arguebuf.Participant(
                 id=user.id,
                 username=user.id,
-                description=user.about,
+                description=strip_tags(user.about) if user.about else None,
                 metadata=arguebuf.Metadata(
                     created=parse_timestamp(user.created), updated=pendulum.now()
                 ),
