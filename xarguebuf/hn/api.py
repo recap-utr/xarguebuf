@@ -165,11 +165,11 @@ class EndpointConfig:
 
 @ts.settings(frozen=True)
 class Config:
+    output_folder: Path
     graph: common.GraphConfig = common.GraphConfig()
     comment: CommentConfig = CommentConfig()
     story: StoryConfig = StoryConfig()
     endpoint: EndpointConfig = EndpointConfig()
-    output_folder: Path = ts.option(default=Path("data/hn"))
     entailment_address: t.Optional[str] = ts.option(default=None)
 
 
