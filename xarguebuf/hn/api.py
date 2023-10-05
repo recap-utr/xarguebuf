@@ -380,7 +380,7 @@ def build_subtree(
 ) -> arguebuf.Graph:
     for comment in comments[parent.id]:
         atom = build_atom(comment, participants)
-        scheme = arguebuf.SchemeNode(id=f"{atom.id,parent.id}")
+        scheme = arguebuf.SchemeNode(id=f"{atom.id},{parent.id}")
         g.add_edge(arguebuf.Edge(atom, scheme))
         g.add_edge(arguebuf.Edge(scheme, parent))
 
