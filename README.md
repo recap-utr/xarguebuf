@@ -69,6 +69,11 @@ xarguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 20 
 
 ## Hacker News
 
+The data has been downloaded on 2023-10-05.
+
 ```sh
-xarguebuf hn api --endpoint-name askstories --endpoint-max-stories 100 --story-min-score 50 --comment-min-chars 20 --graph-min-depth 2 --graph-min-nodes 3 --graph-max-nodes 100
+# Ask HN posts
+xarguebuf hn api --output-folder ./data/hn/askstories --endpoint-name askstories --story-min-score 10 --story-min-descendants 10 --story-max-descendants 100 --comment-min-chars 20 --graph-min-depth 2
+# Regular posts
+xarguebuf hn api --output-folder ./data/hn/beststories --endpoint-name beststories --story-min-score 10 --story-min-descendants 10 --story-max-descendants 100 --comment-min-chars 20 --graph-min-depth 2
 ```
