@@ -133,6 +133,12 @@ class StoryConfig:
     max_score: int = ts.option(
         default=sys.maxsize,
     )
+    min_descendants: int = ts.option(
+        default=0,
+    )
+    max_descendants: int = ts.option(
+        default=sys.maxsize,
+    )
 
 
 @ts.settings(frozen=True)
@@ -240,7 +246,12 @@ async def build_graph(
     story = item.parse()
     assert isinstance(story, Story)
 
-    if story.score < config.story.min_score or story.score > config.story.max_score:
+    if (
+        story.score < config.story.min_score
+        or story.score > config.story.max_score
+        or story.descendants < config.story.min_descendants
+        or story.descendants > config.story.max_descendants
+    ):
         return None
 
     comments = await fetch_comments(story, config, http_client)
