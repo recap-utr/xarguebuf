@@ -69,7 +69,7 @@ xarguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 20 
 
 ## Hacker News
 
-The data has been downloaded on 2023-10-05.
+The data has been downloaded on 2023-10-05 and 2023-10-30.
 
 ```sh
 # Ask HN posts
