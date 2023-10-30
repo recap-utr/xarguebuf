@@ -73,6 +73,8 @@ class RawItem(BaseModel):
     descendants: Optional[int] = None
 
     def parse(self) -> Item | None:
+        if self.deleted or self.dead:
+            return None
         if self.type == "story":
             return Story(**self.model_dump())
         elif self.type == "comment":
