@@ -95,7 +95,11 @@ class Config:
 
 def parse_response(
     f: t.IO[str],
-) -> t.Tuple[t.Set[str], t.Dict[str, model.Tweet], t.Dict[str, model.User],]:
+) -> t.Tuple[
+    t.Set[str],
+    t.Dict[str, model.Tweet],
+    t.Dict[str, model.User],
+]:
     conversations: set[str] = set()
     tweets: dict[str, model.Tweet] = {}
     users: dict[str, model.User] = {}
@@ -284,7 +288,7 @@ def parse_graph(
 
 
 def conversation_path(folder: Path, mc: t.Optional[arguebuf.AtomNode]):
-    assert mc
+    assert mc is not None
 
     return (
         folder
@@ -346,12 +350,12 @@ def convert(
                 mc_tweet, referenced_tweets, participants, entailment_client, config
             )
             mc = g.major_claim
-            assert mc is not None
 
-            common.serialize(
-                g,
-                output_folder,
-                config.graph,
-                mc.id,
-                mc.participant.id if mc.participant else None,
-            )
+            if mc is not None:
+                common.serialize(
+                    g,
+                    output_folder,
+                    config.graph,
+                    mc.id,
+                    mc.participant.id if mc.participant else None,
+                )

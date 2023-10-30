@@ -73,14 +73,12 @@ class RawItem(BaseModel):
     descendants: Optional[int] = None
 
     def parse(self) -> Item | None:
-        if self.deleted or self.dead:
-            return None
-        elif self.type == "story":
+        if self.type == "story":
             return Story(**self.model_dump())
         elif self.type == "comment":
             return Comment(**self.model_dump())
 
-        return None  # jobs/polls are not supported
+        return None
 
 
 # https://stackoverflow.com/a/925630
@@ -215,15 +213,15 @@ async def hn(config: Config, ids: tuple[int, ...]):
 
             if g is not None:
                 mc = g.major_claim
-                assert mc is not None
 
-                common.serialize(
-                    g,
-                    config.output_folder,
-                    config.graph,
-                    mc.id,
-                    mc.participant.id if mc.participant else None,
-                )
+                if mc is not None:
+                    common.serialize(
+                        g,
+                        config.output_folder,
+                        config.graph,
+                        mc.id,
+                        mc.participant.id if mc.participant else None,
+                    )
 
 
 async def build_graph(
@@ -241,13 +239,14 @@ async def build_graph(
         item = RawItem(**response.json())
         parent = item.parent
 
-    assert item is not None
+    if item is None:
+        return None
 
     story = item.parse()
-    assert isinstance(story, Story)
 
     if (
-        story.score < config.story.min_score
+        story is None
+        or story.score < config.story.min_score
         or story.score > config.story.max_score
         or story.descendants < config.story.min_descendants
         or story.descendants > config.story.max_descendants
