@@ -245,7 +245,7 @@ async def build_graph(
     story = item.parse()
 
     if (
-        story is None
+        not isinstance(story, Story)
         or story.score < config.story.min_score
         or story.score > config.story.max_score
         or story.descendants < config.story.min_descendants
