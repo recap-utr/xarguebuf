@@ -3,11 +3,16 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     systems.url = "github:nix-systems/default";
+    poetry2nix = {
+      url = "github:nix-community/poetry2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs @ {
     nixpkgs,
     flake-parts,
     systems,
+    poetry2nix,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -19,10 +24,14 @@
         self',
         ...
       }: let
-        python = pkgs.python310;
+        python = pkgs.python311;
         poetry = pkgs.poetry;
         pkgName = "xarguebuf";
       in {
+        _module.args.pkgs = import nixpkgs {
+          inherit system;
+          overlays = [poetry2nix.overlays.default];
+        };
         packages = {
           default = pkgs.poetry2nix.mkPoetryApplication {
             inherit python;
