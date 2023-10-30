@@ -13,18 +13,18 @@ xarguebuf = "xarguebuf.app:app"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-arguebuf = { version = "^2.1.1", extras = ["graphviz"] }
-pendulum = "^2.1.2"
-twarc = "^2.14.0"
-arg-services = "^1.4.0"
-rich-click = "^1.6.1"
-typed-settings = "^23.0.1"
+arguebuf = { version = "^2.3", extras = ["graphviz"] }
+pendulum = "^2.1"
+twarc = "^2.14"
+arg-services = "^1.4"
+rich-click = "^1.7"
+typed-settings = "^23.0"
 setuptools = "^68"
-httpx = "^0.24.1"
-pydantic = "^2.4.2"
+httpx = "^0.24"
+pydantic = "^2.4"
 
 [tool.poetry.group.dev.dependencies]
-datamodel-code-generator = "^0.21.5"
+datamodel-code-generator = "^0.21"
 
 [build-system]
 requires = ["poetry-core"]
