@@ -80,7 +80,7 @@ class RawItem(BaseModel):
         elif self.type == "comment":
             return Comment(**self.model_dump())
 
-        raise ValueError(f"Item type '{self.type}' not supported")
+        return None  # jobs/polls are not supported
 
 
 # https://stackoverflow.com/a/925630
