@@ -113,19 +113,13 @@ def serialize(
     output_folder: Path,
     config: GraphConfig,
     graph_id: str,
-    user_id: t.Optional[str] = None,
 ) -> None:
     if not (
         len(g.atom_nodes) >= config.min_nodes and len(g.atom_nodes) <= config.max_nodes
     ):
         return
 
-    p = output_folder
-
-    if user_id:
-        p = p / user_id / graph_id
-
-    p = p / graph_id
+    p = output_folder / graph_id
     p.parent.mkdir(parents=True)
 
     arguebuf.dump.file(g, p.with_suffix(".json"))

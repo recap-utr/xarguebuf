@@ -357,5 +357,4 @@ def convert(
                     output_folder,
                     config.graph,
                     mc.id,
-                    mc.participant.id if mc.participant else None,
                 )

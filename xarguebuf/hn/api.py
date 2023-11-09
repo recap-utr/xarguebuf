@@ -222,7 +222,6 @@ async def hn(config: Config, ids: tuple[int, ...]):
                         config.output_folder,
                         config.graph,
                         mc.id,
-                        mc.participant.id if mc.participant else None,
                     )
 
 
