@@ -1,30 +1,28 @@
 # xArguebuf
 
-To convert the conversations to graphs, only the first section (Docker Usage) is relevant.
-Please ignore the sections afterwards (Counting Tweets and below).
+An application to perform real-time argumentation mining on social media data.
 
-## Usage
+## Installation
 
-The app is currently supplied as a pre-built Docker image.
-Execute the following to install the image:
+The app is supplied as Nix package and can be run as follows:
 
 ```sh
-docker load -i dockerImage.tar.gz
+nix run . -- $CMD
 ```
 
-To read and write data, you have to bind a folder (e.g., `./data`) to the container.
-The command to run can simply be appended to the invocation.
-Thus, run it as follows:
+You can also build a Docker image as follows:
 
 ```sh
+nix build .#dockerImage
+# To load it
+docker load -i result
+# To run it, you need to bind a folder like ./data to the container
 docker run -it --rm -v $(pwd)/data:/app/data xarguebuf $CMD
 ```
 
-To get an overview of the options, run `xarguebuf convert --help`.
-As a start, you may want to try the following: `xarguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 50`.
-_Please note:_ Graphs having more than 1000 nodes will not be rendered as this takes way too much time.
+To get an overview of the options, run `xarguebuf --help`.
 
-## X (formerly Twitter)
+## Usage with X (formerly Twitter)
 
 We only considered tweets that were posted between 2020-02-03 (start of primaries in Iowa) and 2020-11-02 (day before election).
 Removed from the result sets are retweets, replies, and quotes.
@@ -41,7 +39,7 @@ $END_TIME="2020-11-02"
 ### Counting Tweets
 
 ```sh
-xarguebuf count --start-time "$START_TIME" --end-time "$END_TIME" "($QUERY) $PARAMETERS"
+xarguebuf twitter count --start-time "$START_TIME" --end-time "$END_TIME" "($QUERY) $PARAMETERS"
 ```
 
 Number of matched tweets: 2181969
@@ -50,11 +48,11 @@ Number of matched tweets: 2181969
 
 ```sh
 # Save all tweets that match the query
-xarguebuf api search --archive --sort-order relevancy --start-time "$START_TIME" --end-time "$END_TIME" --minimal-fields --limit 500 --max-results 100 "($QUERY) $PARAMETERS" data/tweets.jsonl
+xarguebuf twitter api search --archive --sort-order relevancy --start-time "$START_TIME" --end-time "$END_TIME" --minimal-fields --limit 500 --max-results 100 "($QUERY) $PARAMETERS" data/tweets.jsonl
 # Extract their IDs
-xarguebuf api dehydrate data/tweets.jsonl data/tweetids.txt
+xarguebuf twitter api dehydrate data/tweets.jsonl data/tweetids.txt
 # Download the complete archive of all conversations that above tweets are part of
-xarguebuf api conversations --archive --start-time "$START_TIME" --end-time "$END_TIME" data/tweetsids.txt data/conversations.jsonl
+xarguebuf twitter api conversations --archive --start-time "$START_TIME" --end-time "$END_TIME" data/tweetsids.txt data/conversations.jsonl
 ```
 
 ### Converting Conversations to Graphs
@@ -64,10 +62,10 @@ Further, we require graphs to have at least 2 levels and 3 nodes and thus employ
 We discard graphs having more than 50 nodes to keep the annotation effort manageable.
 
 ```sh
-xarguebuf convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 20 --tweet-min-interactions 1 --graph-min-depth 2 --graph-min-nodes 3 --graph-max-nodes 50
+xarguebuf twitter convert ./data/conversations.jsonl ./data/graphs --tweet-min-chars 20 --tweet-min-interactions 1 --graph-min-depth 2 --graph-min-nodes 3 --graph-max-nodes 50
 ```
 
-## Hacker News
+## Usage with Hacker News
 
 The data has been downloaded on 2023-10-05 and 2023-10-30.
 
