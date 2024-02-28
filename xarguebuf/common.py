@@ -120,7 +120,7 @@ def serialize(
         return
 
     p = output_folder / graph_id
-    p.parent.mkdir(parents=True)
+    p.parent.mkdir(parents=True, exist_ok=True)
 
     arguebuf.dump.file(g, p.with_suffix(".json"))
 
