@@ -13,7 +13,7 @@ xarguebuf = "xarguebuf.app:app"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-arguebuf = { version = "^2.3", extras = ["graphviz"] }
+arguebuf = "^2.3"
 pendulum = "^2.1"
 twarc = "^2.14"
 arg-services = "^1.4"

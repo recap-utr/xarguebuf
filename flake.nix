@@ -62,7 +62,7 @@
             POETRY_VIRTUALENVS_IN_PROJECT = true;
             shellHook = ''
               ${lib.getExe poetry} env use ${lib.getExe python}
-              ${lib.getExe poetry} install --no-root --all-extras
+              ${lib.getExe poetry} install --no-root --all-extras --sync
               export BEARER_TOKEN=$(cat bearer-token.txt)
             '';
           };
