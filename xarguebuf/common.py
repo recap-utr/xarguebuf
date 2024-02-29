@@ -13,7 +13,7 @@ from arg_services.mining.v1beta import adu_pb2, entailment_pb2, entailment_pb2_g
 @ts.settings(frozen=True)
 class GraphConfig:
     render: bool = ts.option(
-        default=True,
+        default=False,
         click={"param_decls": "--graph-render", "is_flag": True},
         help=(
             "If set, the graphs will be rendered and stored as PDF files besides the"
